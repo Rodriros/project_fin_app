@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Paleta Light Mode baseada na imagem */
+  --bg-color: #f3f4f6; /* Fundo geral cinza muito claro */
+  --card-bg: #ffffff; /* Fundo dos cards branco puro */
+  --text-main: #111827; /* Texto escuro */
+  --text-muted: #6b7280; /* Texto secundário */
+  --border-color: #e5e7eb;
+  
+  /* Cores de Marca (Forest Green & Lime) */
+  --sidebar-bg: #0d2218; /* Verde floresta bem escuro */
+  --sidebar-text: #e5e7eb;
+  --sidebar-active-bg: rgba(183, 228, 82, 0.1); /* Fundo ativo com toque de verde limão */
+  --accent-lime: #b7e452; /* Verde limão das tags e destaques na imagem */
+  --accent-lime-hover: #9fce3e;
+  
+  /* Cores de Feedback (Receita/Despesa) */
+  --positive-color: #22c55e; /* Verde clássico para receitas */
+  --positive-bg: #dcfce7;
+  --negative-color: #ef4444; /* Vermelho/Laranja para despesas (solicitado pelo usuário) */
+  --negative-bg: #fee2e2;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+}
+
+.dark {
+  /* Paleta Dark Mode baseada na imagem */
+  --bg-color: #1a1e22; /* Fundo bem escuro */
+  --card-bg: #23272d; /* Fundo dos cards no dark mode */
+  --text-main: #f9fafb; /* Texto claro */
+  --text-muted: #9ca3af; /* Texto secundário */
+  --border-color: #374151;
+  
+  --sidebar-bg: #111417; /* Sidebar ainda mais escura que o fundo no dark mode */
+  --sidebar-text: #9ca3af;
+  --sidebar-active-bg: #1f2328;
+  
+  --accent-lime: #b7e452; /* Mesmo limão ou ligeiramente mais brilhante no dark */
+  --accent-lime-hover: #a5d33f;
+  
+  /* Cores de Feedback (Receita/Despesa) no Dark Mode */
+  --positive-color: #4ade80; /* Verde um pouco mais vibrante para contraste no escuro */
+  --positive-bg: rgba(74, 222, 128, 0.15);
+  --negative-color: #f87171; /* Vermelho claro para destaque no escuro */
+  --negative-bg: rgba(248, 113, 113, 0.15);
+
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Outfit', sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+/* Utilitários globais úteis */
+.glass-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* Scrollbar limpa */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

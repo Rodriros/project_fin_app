@@ -1,0 +1,84 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.topCards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.card {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.cardValue {
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.cardTrend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.positive {
+  color: var(--positive-color);
+  background-color: var(--positive-bg);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.negative {
+  color: var(--negative-color);
+  background-color: var(--negative-bg);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* Specific Card - Update Card from Image */
+.darkCard {
+  background-color: var(--sidebar-bg);
+  color: white;
+  border: none;
+}
+
+.darkCard .cardHeader {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.darkCard .cardValue {
+  color: white;
+  font-size: 1.25rem;
+  margin-top: 1rem;
+}
+
+/* Charts Area */
+.chartsArea {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.chartCard {
+  padding: 1.5rem;
+  min-height: 300px;
+}
