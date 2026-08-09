@@ -2,7 +2,54 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  max-width: 800px;
+  max-width: 1100px;
+}
+
+/* Tab Navigation */
+.tabNav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  color: var(--text-main);
+}
+
+.activeTab {
+  color: var(--text-main);
+  border-bottom-color: var(--accent-lime);
+}
+
+.trashBadgeCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background-color: #dc2626;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 0.5rem;
 }
 
 .section {
@@ -66,4 +113,316 @@
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--text-main);
+}
+
+/* Category Management */
+.categoryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.addCategoryButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent-lime);
+  background-color: transparent;
+  color: var(--accent-lime);
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.addCategoryButton:hover {
+  background-color: rgba(163, 230, 53, 0.1);
+}
+
+.addCategoryForm {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-color);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent-lime);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.catFormInput {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  outline: none;
+  font-size: 0.875rem;
+}
+
+.catFormInput:focus {
+  border-color: var(--accent-lime);
+}
+
+.catFormSelect {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  outline: none;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.catFormSaveBtn {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background-color: var(--accent-lime);
+  color: #111;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.catFormSaveBtn:hover {
+  filter: brightness(1.1);
+}
+
+.catFormCancelBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.catFormCancelBtn:hover {
+  color: var(--negative-color);
+  border-color: var(--negative-color);
+}
+
+.catErrorMessage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  background-color: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  color: #ef4444;
+  font-size: 0.85rem;
+  animation: slideDown 0.2s ease-out;
+}
+
+.categoryInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.categoryActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.deleteCategoryBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.categoryItem:hover .deleteCategoryBtn {
+  opacity: 1;
+}
+
+.deleteCategoryBtn:hover {
+  color: #ef4444;
+  border-color: rgba(220, 38, 38, 0.3);
+  background-color: rgba(220, 38, 38, 0.08);
+}
+
+.deleteConfirmInline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  animation: slideDown 0.15s ease-out;
+}
+
+.deleteConfirmYes {
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background-color: #dc2626;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteConfirmYes:hover {
+  background-color: #b91c1c;
+}
+
+.deleteConfirmNo {
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteConfirmNo:hover {
+  border-color: var(--text-main);
+  color: var(--text-main);
+}
+.trashHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.trashTable {
+  overflow-x: auto;
+  margin-top: 0.5rem;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-lime);
+  cursor: pointer;
+}
+
+.selectedRow {
+  background-color: rgba(163, 230, 53, 0.06) !important;
+}
+
+.emptyTrash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+  gap: 1rem;
+}
+
+.emptyTrash p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.restoreButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent-lime);
+  background-color: transparent;
+  color: var(--accent-lime);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.restoreButton:hover {
+  background-color: rgba(163, 230, 53, 0.1);
+}
+
+.restoreButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.restoreButtonSmall {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-main);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.restoreButtonSmall:hover {
+  border-color: var(--accent-lime);
+  color: var(--accent-lime);
+}
+
+.restoreButtonSmall:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.daysLeftBadge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: rgba(163, 230, 53, 0.15);
+  color: var(--accent-lime);
+}
+
+.daysLeftWarning {
+  background-color: rgba(251, 191, 36, 0.15);
+  color: #f59e0b;
+}
+
+.daysLeftCritical {
+  background-color: rgba(220, 38, 38, 0.15);
+  color: #ef4444;
 }

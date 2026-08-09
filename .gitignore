@@ -6,3 +6,7 @@ node_modules
 
 # Spec documentation (local only)
 skeleton-app.md
+
+uploads/
+prisma/dev.db
+*.db

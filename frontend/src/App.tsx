@@ -5,11 +5,10 @@ import Layout from './components/Layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Settings from './pages/Settings';
+import Reports from './pages/Reports';
+import Accounts from './pages/Accounts';
 
-// Mock Pages for now
-const Reports = () => <div><h1>Reports (DRE)</h1></div>;
-
-function App() {
+const App = () => {
   return (
     <BrowserRouter>
       <Routes>
@@ -17,6 +16,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="transactions" element={<Transactions />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="accounts" element={<Accounts />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

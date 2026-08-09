@@ -25,6 +25,7 @@ model Account {
   type      String   // e.g., 'CHECKING', 'CREDIT_CARD', 'SAVINGS', 'CASH'
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+  initialBalance Float @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -58,4 +59,23 @@ model Transaction {
   user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model DeletedTransaction {
+  id              String   @id @default(uuid())
+  originalId      String
+  amount          Float
+  type            String
+  date            DateTime
+  description     String
+  status          String
+  accountId       String
+  accountName     String   @default("")
+  categoryId      String?
+  categoryName    String?
+  userId          String
+  deletedByUserId String
+  deletedByName   String
+  deletedAt       DateTime @default(now())
+  createdAt       DateTime
 }

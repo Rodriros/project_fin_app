@@ -13,10 +13,26 @@ const Dashboard: React.FC = () => {
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
   
+  const [filterMode, setFilterMode] = useState<'month' | 'custom'>('month');
+  
+  // Month mode state
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  
+  // Custom mode state
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
 
-  const { data, loading, error } = useDashboardData(selectedMonth, selectedYear);
+  // Derived effective dates
+  const effectiveStartDate = filterMode === 'month' 
+    ? new Date(selectedYear, selectedMonth - 1, 1).toISOString()
+    : customStartDate ? new Date(`${customStartDate}T00:00:00`).toISOString() : undefined;
+    
+  const effectiveEndDate = filterMode === 'month'
+    ? new Date(selectedYear, selectedMonth, 0, 23, 59, 59).toISOString()
+    : customEndDate ? new Date(`${customEndDate}T23:59:59`).toISOString() : undefined;
+
+  const { data, loading, error } = useDashboardData(effectiveStartDate, effectiveEndDate);
   const { exportCSV } = useUpload();
 
   if (loading) return <div style={{ padding: '2rem', color: 'var(--text-main)' }}>Loading dashboard...</div>;
@@ -35,40 +51,71 @@ const Dashboard: React.FC = () => {
   })) || [];
 
   const handleExport = () => {
-    const startDate = new Date(selectedYear, selectedMonth - 1, 1).toISOString();
-    const endDate = new Date(selectedYear, selectedMonth, 0, 23, 59, 59).toISOString();
-    exportCSV(startDate, endDate);
+    if (effectiveStartDate && effectiveEndDate) {
+      exportCSV(effectiveStartDate, effectiveEndDate);
+    }
   };
 
   return (
     <div className={styles.dashboard}>
       {/* Filters */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2 style={{ color: 'var(--text-main)', fontSize: '1.25rem', fontWeight: 600 }}>Dashboard</h2>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', cursor: 'pointer' }}>
             <Download size={16} /> Exportar
           </button>
           
-          <Calendar size={18} style={{ color: 'var(--text-muted)', marginLeft: '1rem' }} />
-          <select 
-            value={selectedMonth} 
-            onChange={e => setSelectedMonth(Number(e.target.value))}
-            style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)' }}
-          >
-            {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
-              <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('default', { month: 'long' })}</option>
-            ))}
-          </select>
-          <select 
-            value={selectedYear} 
-            onChange={e => setSelectedYear(Number(e.target.value))}
-            style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)' }}
-          >
-            {[currentYear - 1, currentYear, currentYear + 1].map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem', paddingLeft: '0.5rem', borderLeft: '1px solid var(--border-color)' }}>
+            <Calendar size={18} style={{ color: 'var(--text-muted)' }} />
+            <select
+              value={filterMode}
+              onChange={e => setFilterMode(e.target.value as 'month' | 'custom')}
+              style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)' }}
+            >
+              <option value="month">Mensal</option>
+              <option value="custom">Personalizado</option>
+            </select>
+
+            {filterMode === 'month' ? (
+              <>
+                <select 
+                  value={selectedMonth} 
+                  onChange={e => setSelectedMonth(Number(e.target.value))}
+                  style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)' }}
+                >
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                  ))}
+                </select>
+                <select 
+                  value={selectedYear} 
+                  onChange={e => setSelectedYear(Number(e.target.value))}
+                  style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)' }}
+                >
+                  {[currentYear - 1, currentYear, currentYear + 1].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input 
+                  type="date"
+                  value={customStartDate}
+                  onChange={e => setCustomStartDate(e.target.value)}
+                  style={{ padding: '0.45rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', fontSize: '0.85rem' }}
+                />
+                <span style={{ color: 'var(--text-muted)' }}>até</span>
+                <input 
+                  type="date"
+                  value={customEndDate}
+                  onChange={e => setCustomEndDate(e.target.value)}
+                  style={{ padding: '0.45rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', fontSize: '0.85rem' }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

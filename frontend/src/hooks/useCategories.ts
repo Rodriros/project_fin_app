@@ -33,9 +33,16 @@ export function useCategories() {
     return data;
   };
 
+  const deleteCategory = async (id: string) => {
+    await fetchApi(`/categories/${id}`, {
+      method: 'DELETE',
+    });
+    setCategories(prev => prev.filter(c => c.id !== id));
+  };
+
   useEffect(() => {
     loadCategories();
   }, []);
 
-  return { categories, loading, error, createCategory, refresh: loadCategories };
+  return { categories, loading, error, createCategory, deleteCategory, refresh: loadCategories };
 }
