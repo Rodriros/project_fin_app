@@ -1,0 +1,64 @@
+.reportsPage {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.dreTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dreTable th,
+.dreTable td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dreTable th {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.sectionRow {
+  background-color: var(--bg-color);
+}
+
+.sectionTitle {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.subItem td:first-child {
+  padding-left: 2rem;
+  color: var(--text-muted);
+}
+
+.amount {
+  text-align: right !important;
+  font-family: monospace;
+  font-size: 1.1rem;
+}
+
+.positive {
+  color: var(--positive-color);
+}
+
+.negative {
+  color: var(--negative-color);
+}
+
+.totalRow td {
+  font-weight: 700;
+  font-size: 1.25rem;
+  border-top: 2px solid var(--border-color);
+  border-bottom: none;
+}

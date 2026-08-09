@@ -8,6 +8,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .addButton {
@@ -30,6 +32,9 @@
 }
 
 .secondaryButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   background-color: transparent;
   color: var(--text-main);
   border: 1px solid var(--border-color);
@@ -38,6 +43,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 0.875rem;
 }
 
 .secondaryButton:hover {
@@ -45,6 +51,9 @@
 }
 
 .primaryButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   background-color: var(--sidebar-bg);
   color: white;
   border: none;
@@ -53,12 +62,97 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 0.875rem;
 }
 
 .primaryButton:hover {
   filter: brightness(1.1);
 }
 
+.dangerButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.dangerButton:hover {
+  background-color: #b91c1c;
+}
+
+.activeFilter {
+  border-color: var(--accent-lime) !important;
+  color: var(--accent-lime) !important;
+}
+
+/* FILTER BAR */
+.filterBar {
+  padding: 1rem 1.5rem;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.filterLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filterInput {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  outline: none;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+}
+
+.filterInput:focus {
+  border-color: var(--accent-lime);
+}
+
+.filterActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* TABLE */
 .tableContainer {
   overflow-x: auto;
 }
@@ -69,7 +163,7 @@ table {
 }
 
 th, td {
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
 }
@@ -82,6 +176,17 @@ th {
 
 tr:last-child td {
   border-bottom: none;
+}
+
+.selectedRow {
+  background-color: rgba(163, 230, 53, 0.06) !important;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-lime);
+  cursor: pointer;
 }
 
 .badge {
@@ -149,4 +254,38 @@ tr:last-child td {
 
 .formInput:focus {
   border-color: var(--accent-lime);
+}
+
+/* Delete Warning */
+.deleteWarning {
+  background-color: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+.userBadge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+/* Global Selectors in Preview */
+.globalSelectors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  padding: 1rem 0;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.globalSelectorItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }

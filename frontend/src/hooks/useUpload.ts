@@ -33,6 +33,34 @@ export function useUpload() {
     }
   };
 
+  const previewStatement = async (file: File, bank?: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (bank) formData.append('bank', bank);
+
+      const response = await fetch(`${API_BASE_URL}/upload/preview`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Preview failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      setLoading(false);
+      return data.transactions;
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+      throw err;
+    }
+  };
+
   const exportCSV = (startDate?: string, endDate?: string) => {
     let url = `${API_BASE_URL}/reports/export/csv`;
     if (startDate || endDate) {
@@ -51,5 +79,5 @@ export function useUpload() {
     document.body.removeChild(a);
   };
 
-  return { uploadStatement, exportCSV, loading, error };
+  return { uploadStatement, previewStatement, exportCSV, loading, error };
 }

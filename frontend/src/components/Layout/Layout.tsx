@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, PieChart, Settings, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Receipt, PieChart, Settings, Sun, Moon, Wallet } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 import { useI18nStore } from '../../i18n';
 import styles from './Layout.module.css';
@@ -14,6 +14,7 @@ const Layout: React.FC = () => {
     { name: t('nav_overview'), path: '/', icon: <LayoutDashboard size={20} /> },
     { name: t('nav_transactions'), path: '/transactions', icon: <Receipt size={20} /> },
     { name: t('nav_reports'), path: '/reports', icon: <PieChart size={20} /> },
+    { name: t('nav_accounts'), path: '/accounts', icon: <Wallet size={20} /> },
     { name: t('nav_settings'), path: '/settings', icon: <Settings size={20} /> },
   ];
 

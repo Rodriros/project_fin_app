@@ -51,6 +51,20 @@ app.get('/ping', (req, res) => {
   res.json({ message: 'pong' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
+  
+  // Purge expired trash items (> 30 days) on startup
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const purged = await prisma.deletedTransaction.deleteMany({
+      where: { deletedAt: { lt: thirtyDaysAgo } }
+    });
+    if (purged.count > 0) {
+      console.log(`Purged ${purged.count} expired trash items.`);
+    }
+  } catch (err) {
+    console.error('Failed to purge expired trash:', err);
+  }
 });

@@ -20,7 +20,7 @@ interface DashboardData {
   expenseByCategory: CategoryTotal[];
 }
 
-export function useDashboardData(month?: number, year?: number) {
+export function useDashboardData(startDate?: string, endDate?: string) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,11 +29,7 @@ export function useDashboardData(month?: number, year?: number) {
     try {
       setLoading(true);
       let query = '';
-      if (month !== undefined && year !== undefined) {
-        // month is 0-indexed if using JS dates, but let's assume 1-12 from UI
-        // Construct start and end dates
-        const startDate = new Date(year, month - 1, 1).toISOString();
-        const endDate = new Date(year, month, 0, 23, 59, 59).toISOString();
+      if (startDate && endDate) {
         query = `?startDate=${startDate}&endDate=${endDate}`;
       }
 
@@ -48,7 +44,7 @@ export function useDashboardData(month?: number, year?: number) {
 
   useEffect(() => {
     loadData();
-  }, [month, year]);
+  }, [startDate, endDate]);
 
   return { data, loading, error, refresh: loadData };
 }
