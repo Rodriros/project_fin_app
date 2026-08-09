@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Wallet, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Wallet, X, Landmark, TrendingUp, CreditCard } from 'lucide-react';
 import { useI18nStore } from '../i18n';
 import { fetchApi } from '../services/api';
 import styles from './Accounts.module.css';
@@ -25,7 +25,7 @@ const Accounts: React.FC = () => {
     name: '',
     type: 'CHECKING',
     customType: '',
-    initialBalance: 0
+    initialBalance: '0'
   });
 
   const loadAccounts = async () => {
@@ -46,18 +46,18 @@ const Accounts: React.FC = () => {
 
   const openCreateModal = () => {
     setEditingAccount(null);
-    setFormData({ name: '', type: 'CHECKING', customType: '', initialBalance: 0 });
+    setFormData({ name: '', type: 'CHECKING', customType: '', initialBalance: '0' });
     setIsModalOpen(true);
   };
 
   const openEditModal = (acc: Account) => {
     setEditingAccount(acc);
     // Determine if it's a standard type
-    const standardTypes = ['CHECKING', 'CREDIT_CARD', 'SAVINGS', 'CASH'];
+    const standardTypes = ['CHECKING', 'CREDIT_CARD', 'SAVINGS', 'CASH', 'INVESTMENT'];
     if (standardTypes.includes(acc.type)) {
-      setFormData({ name: acc.name, type: acc.type, customType: '', initialBalance: acc.initialBalance || 0 });
+      setFormData({ name: acc.name, type: acc.type, customType: '', initialBalance: String(acc.initialBalance || 0) });
     } else {
-      setFormData({ name: acc.name, type: 'OTHER', customType: acc.type, initialBalance: acc.initialBalance || 0 });
+      setFormData({ name: acc.name, type: 'OTHER', customType: acc.type, initialBalance: String(acc.initialBalance || 0) });
     }
     setIsModalOpen(true);
   };
@@ -66,18 +66,22 @@ const Accounts: React.FC = () => {
     e.preventDefault();
     if (!formData.name) return;
 
+    // For OTHER and INVESTMENT, we store the custom specification in customType
     const finalType = formData.type === 'OTHER' ? (formData.customType || 'OTHER') : formData.type;
+    const finalName = formData.type === 'INVESTMENT' && formData.customType 
+      ? `${formData.name} - ${formData.customType}` 
+      : formData.name;
 
     try {
       if (editingAccount) {
         await fetchApi(`/accounts/${editingAccount.id}`, {
           method: 'PUT',
-          body: JSON.stringify({ name: formData.name, type: finalType, initialBalance: Number(formData.initialBalance) })
+          body: JSON.stringify({ name: finalName, type: finalType, initialBalance: Number(formData.initialBalance) })
         });
       } else {
         await fetchApi('/accounts', {
           method: 'POST',
-          body: JSON.stringify({ name: formData.name, type: finalType, initialBalance: Number(formData.initialBalance) })
+          body: JSON.stringify({ name: finalName, type: finalType, initialBalance: Number(formData.initialBalance) })
         });
       }
       setIsModalOpen(false);
@@ -120,10 +124,14 @@ const Accounts: React.FC = () => {
                   {acc.type === 'CHECKING' ? t('type_checking') : 
                    acc.type === 'CREDIT_CARD' ? t('type_credit') : 
                    acc.type === 'SAVINGS' ? t('type_savings') : 
-                   acc.type === 'CASH' ? t('type_cash') : acc.type}
+                   acc.type === 'CASH' ? t('type_cash') : 
+                   acc.type === 'INVESTMENT' ? 'Investimento' : acc.type}
                 </span>
               </div>
-              <Wallet size={24} color="var(--text-muted)" />
+              {acc.type === 'CASH' ? <Wallet size={24} color="var(--text-muted)" /> :
+               acc.type === 'CREDIT_CARD' ? <CreditCard size={24} color="var(--text-muted)" /> :
+               acc.type === 'INVESTMENT' ? <TrendingUp size={24} color="var(--text-muted)" /> :
+               <Landmark size={24} color="var(--text-muted)" />}
             </div>
             
             <div>
@@ -181,6 +189,7 @@ const Accounts: React.FC = () => {
                   <option value="CREDIT_CARD">{t('type_credit')}</option>
                   <option value="SAVINGS">{t('type_savings')}</option>
                   <option value="CASH">{t('type_cash')}</option>
+                  <option value="INVESTMENT">Investimento</option>
                   <option value="OTHER">{t('type_other')}</option>
                 </select>
               </div>
@@ -192,20 +201,22 @@ const Accounts: React.FC = () => {
                   step="0.01"
                   className={styles.formInput} 
                   value={formData.initialBalance} 
-                  onChange={e => setFormData({...formData, initialBalance: Number(e.target.value)})} 
+                  onChange={e => setFormData({...formData, initialBalance: e.target.value})} 
                   placeholder="0.00"
                 />
               </div>
 
-              {formData.type === 'OTHER' && (
+              {(formData.type === 'OTHER' || formData.type === 'INVESTMENT') && (
                 <div>
-                  <label className={styles.formLabel}>{t('custom_type')}</label>
+                  <label className={styles.formLabel}>
+                    {formData.type === 'INVESTMENT' ? 'Especificar Investimento' : t('custom_type')}
+                  </label>
                   <input 
                     type="text" 
                     className={styles.formInput} 
                     value={formData.customType} 
                     onChange={e => setFormData({...formData, customType: e.target.value})} 
-                    placeholder="Ex: Investimento, Vale Alimentação..."
+                    placeholder={formData.type === 'INVESTMENT' ? 'Ex: CDB do Nubank, Ações da Petrobras' : 'Ex: Investimento, Vale Alimentação...'}
                     required 
                   />
                 </div>

@@ -8,55 +8,124 @@ router.get('/reports/dre', async (req, res) => {
   const { startDate, endDate } = req.query;
 
   try {
-    // Build where clause
-    const where: any = { userId };
-    if (startDate || endDate) {
-      where.date = {};
-      if (startDate) where.date.gte = new Date(startDate as string);
-      if (endDate) where.date.lte = new Date(endDate as string);
+    const accounts = await prisma.account.findMany({ where: { userId } });
+
+    const periodWhere: any = { userId };
+    const priorWhere: any = { userId };
+    let hasStartDate = false;
+
+    if (startDate) {
+      hasStartDate = true;
+      periodWhere.date = { gte: new Date(startDate as string) };
+      priorWhere.date = { lt: new Date(startDate as string) };
+    }
+    if (endDate) {
+      periodWhere.date = periodWhere.date || {};
+      periodWhere.date.lte = new Date(endDate as string);
     }
 
-    // Fetch all transactions in the period with category info
-    const transactions = await prisma.transaction.findMany({
-      where,
+    const periodTransactions = await prisma.transaction.findMany({
+      where: periodWhere,
       include: { category: true }
     });
 
-    let totalIncome = 0;
-    let totalExpense = 0;
-    const incomeByCategory: Record<string, { categoryId: string, name: string, total: number }> = {};
-    const expenseByCategory: Record<string, { categoryId: string, name: string, total: number }> = {};
+    const priorTransactions = hasStartDate ? await prisma.transaction.findMany({
+      where: priorWhere
+    }) : [];
 
-    transactions.forEach(t => {
+    const accountData: Record<string, any> = {};
+
+    accounts.forEach(acc => {
+      accountData[acc.id] = {
+        accountId: acc.id,
+        accountName: acc.name,
+        initialBalance: acc.initialBalance || 0,
+        priorBalance: acc.initialBalance || 0,
+        periodIncome: 0,
+        periodExpense: 0,
+        finalBalance: 0,
+        incomeByCategory: {},
+        expenseByCategory: {}
+      };
+    });
+
+    priorTransactions.forEach(t => {
+      if (accountData[t.accountId]) {
+        if (t.type === 'INCOME') accountData[t.accountId].priorBalance += t.amount;
+        else accountData[t.accountId].priorBalance -= t.amount;
+      }
+    });
+
+    const consolidated = {
+      priorBalance: 0,
+      periodIncome: 0,
+      periodExpense: 0,
+      finalBalance: 0,
+      incomeByCategory: {} as Record<string, any>,
+      expenseByCategory: {} as Record<string, any>
+    };
+
+    periodTransactions.forEach(t => {
+      const accId = t.accountId;
+      if (!accountData[accId]) return;
+
       const catId = t.categoryId || 'uncategorized';
       const catName = t.category?.name || 'Sem Categoria';
 
       if (t.type === 'INCOME') {
-        totalIncome += t.amount;
-        if (!incomeByCategory[catId]) {
-          incomeByCategory[catId] = { categoryId: catId, name: catName, total: 0 };
+        accountData[accId].periodIncome += t.amount;
+        if (!accountData[accId].incomeByCategory[catId]) {
+          accountData[accId].incomeByCategory[catId] = { categoryId: catId, name: catName, total: 0 };
         }
-        incomeByCategory[catId].total += t.amount;
+        accountData[accId].incomeByCategory[catId].total += t.amount;
+
+        if (!consolidated.incomeByCategory[catId]) {
+          consolidated.incomeByCategory[catId] = { categoryId: catId, name: catName, total: 0 };
+        }
+        consolidated.incomeByCategory[catId].total += t.amount;
+        consolidated.periodIncome += t.amount;
       } else {
-        totalExpense += t.amount;
-        if (!expenseByCategory[catId]) {
-          expenseByCategory[catId] = { categoryId: catId, name: catName, total: 0 };
+        accountData[accId].periodExpense += t.amount;
+        if (!accountData[accId].expenseByCategory[catId]) {
+          accountData[accId].expenseByCategory[catId] = { categoryId: catId, name: catName, total: 0 };
         }
-        expenseByCategory[catId].total += t.amount;
+        accountData[accId].expenseByCategory[catId].total += t.amount;
+
+        if (!consolidated.expenseByCategory[catId]) {
+          consolidated.expenseByCategory[catId] = { categoryId: catId, name: catName, total: 0 };
+        }
+        consolidated.expenseByCategory[catId].total += t.amount;
+        consolidated.periodExpense += t.amount;
       }
     });
 
-    const netBalance = totalIncome - totalExpense;
+    Object.values(accountData).forEach((acc: any) => {
+      acc.finalBalance = acc.priorBalance + acc.periodIncome - acc.periodExpense;
+      acc.incomeByCategory = Object.values(acc.incomeByCategory);
+      acc.expenseByCategory = Object.values(acc.expenseByCategory);
+      consolidated.priorBalance += acc.priorBalance;
+    });
+
+    consolidated.finalBalance = consolidated.priorBalance + consolidated.periodIncome - consolidated.periodExpense;
 
     res.json({
-      summary: {
-        totalIncome,
-        totalExpense,
-        netBalance,
-        isProfitable: netBalance >= 0
+      consolidated: {
+        ...consolidated,
+        incomeByCategory: Object.values(consolidated.incomeByCategory),
+        expenseByCategory: Object.values(consolidated.expenseByCategory),
+        netBalance: consolidated.periodIncome - consolidated.periodExpense,
+        isProfitable: (consolidated.periodIncome - consolidated.periodExpense) >= 0
       },
-      incomeByCategory: Object.values(incomeByCategory),
-      expenseByCategory: Object.values(expenseByCategory),
+      accounts: Object.values(accountData),
+      // Legacy support for Dashboard
+      summary: {
+        totalIncome: consolidated.periodIncome,
+        totalExpense: consolidated.periodExpense,
+        netBalance: consolidated.periodIncome - consolidated.periodExpense,
+        isProfitable: (consolidated.periodIncome - consolidated.periodExpense) >= 0
+      },
+      incomeByCategory: Object.values(consolidated.incomeByCategory),
+      expenseByCategory: Object.values(consolidated.expenseByCategory),
       period: {
         startDate: startDate || 'Beginning',
         endDate: endDate || 'Now'

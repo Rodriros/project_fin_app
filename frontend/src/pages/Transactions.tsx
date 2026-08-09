@@ -41,6 +41,8 @@ const Transactions: React.FC = () => {
     description: '',
     amount: '',
     categoryId: '',
+    accountId: '',
+    type: 'EXPENSE' as 'EXPENSE' | 'INCOME',
     date: new Date().toISOString().split('T')[0],
   });
   
@@ -50,13 +52,18 @@ const Transactions: React.FC = () => {
       if (formData.description.length > 2) {
         const catId = await suggestCategory(formData.description);
         if (catId) {
-          setFormData(prev => ({ ...prev, categoryId: catId }));
+          const suggestedCat = categories.find(c => c.id === catId);
+          if (suggestedCat) {
+            setFormData(prev => ({ ...prev, categoryId: catId, type: suggestedCat.type }));
+          } else {
+            setFormData(prev => ({ ...prev, categoryId: catId }));
+          }
         }
       }
     };
     const timer = setTimeout(fetchSuggestion, 500); // debounce
     return () => clearTimeout(timer);
-  }, [formData.description]);
+  }, [formData.description, categories]);
 
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -141,13 +148,14 @@ const Transactions: React.FC = () => {
       description: formData.description,
       amount: Number(formData.amount),
       categoryId: formData.categoryId,
+      accountId: formData.accountId || undefined,
       type: cat.type,
       date: new Date(formData.date).toISOString(),
       status: 'COMPLETED'
     });
 
     setIsModalOpen(false);
-    setFormData({ description: '', amount: '', categoryId: '', date: new Date().toISOString().split('T')[0] });
+    setFormData({ description: '', amount: '', categoryId: '', accountId: '', type: 'EXPENSE', date: new Date().toISOString().split('T')[0] });
   };
 
   const handleCreateCategory = async () => {
@@ -259,7 +267,10 @@ const Transactions: React.FC = () => {
           <button className={styles.secondaryButton} onClick={() => setIsUploadModalOpen(true)} id="btn-import-statement">
             <Upload size={18} /> Importar Extrato
           </button>
-          <button className={styles.primaryButton} onClick={() => setIsModalOpen(true)} id="btn-add-transaction">
+          <button className={styles.primaryButton} onClick={() => {
+            setFormData(prev => ({ ...prev, accountId: accounts[0]?.id || '' }));
+            setIsModalOpen(true);
+          }} id="btn-add-transaction">
             <Plus size={18} /> {t('add_new')}
           </button>
         </div>
@@ -447,6 +458,21 @@ const Transactions: React.FC = () => {
             
             <form onSubmit={handleCreateTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
+                <label className={styles.formLabel}>Conta</label>
+                <select
+                  className={styles.formInput}
+                  value={formData.accountId}
+                  onChange={e => setFormData({ ...formData, accountId: e.target.value })}
+                  required
+                >
+                  <option value="">Selecione uma conta</option>
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>{acc.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className={styles.formLabel}>Data</label>
                 <input 
                   type="date" 
@@ -455,6 +481,18 @@ const Transactions: React.FC = () => {
                   onChange={e => setFormData({...formData, date: e.target.value})} 
                   required 
                 />
+              </div>
+
+              <div>
+                <label className={styles.formLabel}>Tipo</label>
+                <select
+                  className={styles.formInput}
+                  value={formData.type}
+                  onChange={e => setFormData({ ...formData, type: e.target.value as 'EXPENSE' | 'INCOME', categoryId: '' })}
+                >
+                  <option value="EXPENSE">Despesa</option>
+                  <option value="INCOME">Receita</option>
+                </select>
               </div>
 
               <div>
@@ -500,8 +538,8 @@ const Transactions: React.FC = () => {
                       required
                     >
                       <option value="">Selecione uma categoria</option>
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name} ({c.type === 'INCOME' ? 'Receita' : 'Despesa'})</option>
+                      {categories.filter(c => c.type === formData.type).map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
                     <button type="button" onClick={() => setIsCreatingCategory(true)} className={styles.secondaryButton}>
@@ -527,13 +565,7 @@ const Transactions: React.FC = () => {
                 )}
               </div>
 
-              {formData.categoryId && !isCreatingCategory && (
-                <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                  Tipo Automático: <strong style={{ color: categories.find(c => c.id === formData.categoryId)?.type === 'INCOME' ? 'var(--accent-lime)' : 'var(--negative-color)' }}>
-                    {categories.find(c => c.id === formData.categoryId)?.type === 'INCOME' ? 'Receita' : 'Despesa'}
-                  </strong>
-                </div>
-              )}
+              {/* Automatic Type label removed since it's now explicit */}
 
               <button type="submit" className={styles.addButton} style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }}>
                 Salvar Transação

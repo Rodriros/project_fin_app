@@ -8,16 +8,41 @@ interface DashboardSummary {
   isProfitable: boolean;
 }
 
-interface CategoryTotal {
+export interface CategoryTotal {
   categoryId: string;
   name: string;
   total: number;
 }
 
-interface DashboardData {
+export interface AccountDRE {
+  accountId: string;
+  accountName: string;
+  initialBalance: number;
+  priorBalance: number;
+  periodIncome: number;
+  periodExpense: number;
+  finalBalance: number;
+  incomeByCategory: CategoryTotal[];
+  expenseByCategory: CategoryTotal[];
+}
+
+export interface ConsolidatedDRE {
+  priorBalance: number;
+  periodIncome: number;
+  periodExpense: number;
+  finalBalance: number;
+  incomeByCategory: CategoryTotal[];
+  expenseByCategory: CategoryTotal[];
+  netBalance: number;
+  isProfitable: boolean;
+}
+
+export interface DashboardData {
   summary: DashboardSummary;
   incomeByCategory: CategoryTotal[];
   expenseByCategory: CategoryTotal[];
+  accounts?: AccountDRE[];
+  consolidated?: ConsolidatedDRE;
 }
 
 export function useDashboardData(startDate?: string, endDate?: string) {

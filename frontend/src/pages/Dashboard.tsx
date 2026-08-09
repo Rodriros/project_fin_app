@@ -35,9 +35,6 @@ const Dashboard: React.FC = () => {
   const { data, loading, error } = useDashboardData(effectiveStartDate, effectiveEndDate);
   const { exportCSV } = useUpload();
 
-  if (loading) return <div style={{ padding: '2rem', color: 'var(--text-main)' }}>Loading dashboard...</div>;
-  if (error) return <div style={{ padding: '2rem', color: 'var(--negative-color)' }}>Error loading data: {error}</div>;
-
   const summary = data?.summary || { totalIncome: 0, totalExpense: 0, netBalance: 0, isProfitable: true };
   
   // Transform data for charts
@@ -115,6 +112,8 @@ const Dashboard: React.FC = () => {
                 />
               </div>
             )}
+            {loading && <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginLeft: '0.5rem' }}>Carregando...</span>}
+            {error && <span style={{ color: 'var(--negative-color)', fontSize: '0.875rem', marginLeft: '0.5rem' }}>Erro ao carregar dados</span>}
           </div>
         </div>
       </div>

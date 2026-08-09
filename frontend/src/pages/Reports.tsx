@@ -29,12 +29,78 @@ const Reports: React.FC = () => {
 
   const { data, loading, error } = useDashboardData(effectiveStartDate, effectiveEndDate);
 
-  if (loading) return <div style={{ padding: '2rem' }}>Loading DRE...</div>;
-  if (error) return <div style={{ padding: '2rem', color: 'red' }}>Error: {error}</div>;
-
   const summary = data?.summary || { totalIncome: 0, totalExpense: 0, netBalance: 0, isProfitable: true };
-  const incomes = data?.incomeByCategory || [];
-  const expenses = data?.expenseByCategory || [];
+
+  const renderDRE = (title: string, dreData: any, isConsolidated: boolean = false) => {
+    if (!dreData) return null;
+    return (
+      <div className="glass-panel" style={{ marginBottom: '2rem' }}>
+        <h3 style={{ padding: '1.25rem', margin: 0, color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', fontSize: '1.1rem' }}>
+          {title}
+        </h3>
+        <table className={styles.dreTable}>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th className={styles.amount}>Valor (R$)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className={styles.sectionRow}>
+              <td className={styles.sectionTitle}>Saldo Anterior</td>
+              <td className={`${styles.amount} ${dreData.priorBalance >= 0 ? styles.positive : styles.negative}`}>
+                {dreData.priorBalance >= 0 ? '+' : '-'} {Math.abs(dreData.priorBalance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+
+            {/* INCOMES */}
+            <tr className={styles.sectionRow}>
+              <td className={styles.sectionTitle}>{t('dre_revenues')} do Período</td>
+              <td className={`${styles.amount} ${styles.positive}`}>
+                + {dreData.periodIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            {dreData.incomeByCategory.map((inc: any) => (
+              <tr key={inc.categoryId} className={styles.subItem}>
+                <td>{inc.name}</td>
+                <td className={styles.amount}>{inc.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+              </tr>
+            ))}
+
+            {/* EXPENSES */}
+            <tr className={styles.sectionRow}>
+              <td className={styles.sectionTitle}>{t('dre_expenses')} do Período</td>
+              <td className={`${styles.amount} ${styles.negative}`}>
+                - {dreData.periodExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            {dreData.expenseByCategory.map((exp: any) => (
+              <tr key={exp.categoryId} className={styles.subItem}>
+                <td>{exp.name}</td>
+                <td className={styles.amount}>- {exp.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+              </tr>
+            ))}
+
+            {/* RESULTADO DO PERÍODO */}
+            <tr className={styles.subItem} style={{ fontWeight: 600, backgroundColor: 'rgba(0,0,0,0.02)' }}>
+              <td>Resultado do Período</td>
+              <td className={`${styles.amount} ${dreData.periodIncome - dreData.periodExpense >= 0 ? styles.positive : styles.negative}`}>
+                {dreData.periodIncome - dreData.periodExpense >= 0 ? '+' : '-'} {Math.abs(dreData.periodIncome - dreData.periodExpense).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+
+            {/* NET RESULT / FINAL BALANCE */}
+            <tr className={styles.totalRow}>
+              <td>{isConsolidated ? 'Saldo Final Consolidado' : 'Saldo Final da Conta'}</td>
+              <td className={`${styles.amount} ${dreData.finalBalance >= 0 ? styles.positive : styles.negative}`}>
+                {dreData.finalBalance >= 0 ? '+' : '-'} {Math.abs(dreData.finalBalance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   return (
     <div className={styles.reportsPage}>
@@ -88,55 +154,19 @@ const Reports: React.FC = () => {
               />
             </div>
           )}
+          {loading && <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginLeft: '0.5rem' }}>Carregando...</span>}
+          {error && <span style={{ color: 'var(--negative-color)', fontSize: '0.875rem', marginLeft: '0.5rem' }}>Erro ao carregar dados</span>}
         </div>
       </div>
 
-      <div className="glass-panel">
-        <table className={styles.dreTable}>
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              <th className={styles.amount}>Valor (R$)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* INCOMES */}
-            <tr className={styles.sectionRow}>
-              <td className={styles.sectionTitle}>{t('dre_revenues')}</td>
-              <td className={`${styles.amount} ${styles.positive}`}>
-                {summary.totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </td>
-            </tr>
-            {incomes.map(inc => (
-              <tr key={inc.categoryId} className={styles.subItem}>
-                <td>{inc.name}</td>
-                <td className={styles.amount}>{inc.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-              </tr>
-            ))}
+      <div style={{ marginTop: '2rem' }}>
+        {data?.accounts?.map((acc: any) => (
+          <React.Fragment key={acc.accountId}>
+            {renderDRE(`Relatório: ${acc.accountName}`, acc)}
+          </React.Fragment>
+        ))}
 
-            {/* EXPENSES */}
-            <tr className={styles.sectionRow}>
-              <td className={styles.sectionTitle}>{t('dre_expenses')}</td>
-              <td className={`${styles.amount} ${styles.negative}`}>
-                - {summary.totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </td>
-            </tr>
-            {expenses.map(exp => (
-              <tr key={exp.categoryId} className={styles.subItem}>
-                <td>{exp.name}</td>
-                <td className={styles.amount}>- {exp.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-              </tr>
-            ))}
-
-            {/* NET RESULT */}
-            <tr className={styles.totalRow}>
-              <td>{t('dre_net_result')}</td>
-              <td className={`${styles.amount} ${summary.isProfitable ? styles.positive : styles.negative}`}>
-                {summary.isProfitable ? '+' : '-'} {Math.abs(summary.netBalance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        {data?.consolidated && renderDRE('Relatório Consolidado (Todas as Contas)', data.consolidated, true)}
       </div>
     </div>
   );
