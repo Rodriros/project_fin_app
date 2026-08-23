@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Upload, X, Download, Save, Trash2, Filter, CheckSquare } from 'lucide-react';
+import { Plus, Upload, X, Download, Save, Trash2, Filter, CheckSquare, Edit3 } from 'lucide-react';
 import { useI18nStore } from '../i18n';
 import { useTransactions, type Transaction, type TransactionFilters } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
@@ -9,7 +9,7 @@ import styles from './Transactions.module.css';
 
 const Transactions: React.FC = () => {
   const { t } = useI18nStore();
-  const { transactions, loading, createTransaction, batchCreateTransactions, deleteBatch, suggestCategory, uniqueDescriptions, refresh, applyFilters, filters } = useTransactions();
+  const { transactions, loading, createTransaction, batchCreateTransactions, deleteBatch, suggestCategory, uniqueDescriptions, refresh, applyFilters, page, totalPages, changePage } = useTransactions();
   const { categories, createCategory } = useCategories();
   const { previewStatement, exportCSV, loading: uploadLoading } = useUpload();
 
@@ -22,6 +22,7 @@ const Transactions: React.FC = () => {
   }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -138,24 +139,61 @@ const Transactions: React.FC = () => {
     }
   };
 
-  const handleCreateTransaction = async (e: React.FormEvent) => {
+  const handleSaveTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.description || !formData.amount || !formData.categoryId || !formData.date) return;
-    const cat = categories.find(c => c.id === formData.categoryId);
-    if (!cat) return;
+    if (!formData.description || !formData.amount || !formData.date) return;
+    
+    // Fallback to type from form if category not found, or user is editing and keeping it.
+    let typeToSave = formData.type;
+    if (formData.categoryId) {
+      const cat = categories.find(c => c.id === formData.categoryId);
+      if (cat) typeToSave = cat.type;
+    }
 
-    await createTransaction({
-      description: formData.description,
-      amount: Number(formData.amount),
-      categoryId: formData.categoryId,
-      accountId: formData.accountId || undefined,
-      type: cat.type,
-      date: new Date(formData.date).toISOString(),
-      status: 'COMPLETED'
+    try {
+      if (editingTransactionId) {
+        // @ts-ignore
+        await useTransactions().updateTransaction(editingTransactionId, {
+          description: formData.description,
+          amount: Number(formData.amount),
+          categoryId: formData.categoryId || null,
+          accountId: formData.accountId || undefined,
+          type: typeToSave,
+          date: new Date(formData.date).toISOString(),
+          status: 'COMPLETED'
+        });
+        refresh(); // Refresh manually to see the update
+      } else {
+        if (!formData.categoryId) return; // Category required for new
+        await createTransaction({
+          description: formData.description,
+          amount: Number(formData.amount),
+          categoryId: formData.categoryId,
+          accountId: formData.accountId || undefined,
+          type: typeToSave,
+          date: new Date(formData.date).toISOString(),
+          status: 'COMPLETED'
+        });
+      }
+      setIsModalOpen(false);
+      setEditingTransactionId(null);
+      setFormData({ description: '', amount: '', categoryId: '', accountId: '', type: 'EXPENSE', date: new Date().toISOString().split('T')[0] });
+    } catch (err: any) {
+      alert("Error saving transaction: " + err.message);
+    }
+  };
+
+  const handleEditClick = (tx: Transaction) => {
+    setEditingTransactionId(tx.id);
+    setFormData({
+      description: tx.description,
+      amount: tx.amount.toString(),
+      categoryId: tx.categoryId || '',
+      accountId: tx.accountId,
+      type: tx.type,
+      date: new Date(tx.date).toISOString().split('T')[0],
     });
-
-    setIsModalOpen(false);
-    setFormData({ description: '', amount: '', categoryId: '', accountId: '', type: 'EXPENSE', date: new Date().toISOString().split('T')[0] });
+    setIsModalOpen(true);
   };
 
   const handleCreateCategory = async () => {
@@ -368,6 +406,7 @@ const Transactions: React.FC = () => {
               <th>{t('col_date')}</th>
               <th>{t('col_status')}</th>
               <th style={{ textAlign: 'right' }}>{t('col_amount')}</th>
+              <th style={{ width: '40px' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -398,11 +437,43 @@ const Transactions: React.FC = () => {
                 <td style={{ textAlign: 'right' }} className={tx.type === 'INCOME' ? styles.incomeAmount : styles.expenseAmount}>
                   {tx.type === 'INCOME' ? '+' : '-'}R${tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </td>
+                <td>
+                  <button 
+                    className={styles.iconBtn} 
+                    onClick={() => handleEditClick(tx)}
+                    title="Editar transação"
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button 
+            className={styles.pageBtn} 
+            disabled={page === 1}
+            onClick={() => changePage(page - 1)}
+          >
+            Anterior
+          </button>
+          <span className={styles.pageInfo}>
+            Página {page} de {totalPages}
+          </span>
+          <button 
+            className={styles.pageBtn} 
+            disabled={page === totalPages}
+            onClick={() => changePage(page + 1)}
+          >
+            Próxima
+          </button>
+        </div>
+      )}
 
       {/* DELETE CONFIRMATION MODAL */}
       {isDeleteConfirmOpen && (
@@ -450,13 +521,15 @@ const Transactions: React.FC = () => {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.25rem', color: 'var(--text-main)' }}>Nova Transação</h3>
+              <h3 style={{ fontSize: '1.25rem', color: 'var(--text-main)', margin: 0 }}>
+                {editingTransactionId ? 'Editar Transação' : t('new_transaction')}
+              </h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <X size={20} />
               </button>
             </div>
             
-            <form onSubmit={handleCreateTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleSaveTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label className={styles.formLabel}>Conta</label>
                 <select

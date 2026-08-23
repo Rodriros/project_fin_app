@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -20,13 +21,15 @@ async function main() {
   let user = await prisma.user.findUnique({ where: { email: 'default@user.com' } });
   
   if (!user) {
+    const hashedPassword = await bcrypt.hash('123456', 10);
     user = await prisma.user.create({
       data: {
         name: 'Default User',
         email: 'default@user.com',
+        password: hashedPassword,
       }
     });
-    console.log('Created default user.');
+    console.log('Created default user with email: default@user.com and password: 123456');
   }
 
   for (const cat of defaultCategories) {

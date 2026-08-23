@@ -29,8 +29,6 @@ const Reports: React.FC = () => {
 
   const { data, loading, error } = useDashboardData(effectiveStartDate, effectiveEndDate);
 
-  const summary = data?.summary || { totalIncome: 0, totalExpense: 0, netBalance: 0, isProfitable: true };
-
   const renderDRE = (title: string, dreData: any, isConsolidated: boolean = false) => {
     if (!dreData) return null;
     return (

@@ -11,18 +11,22 @@ model User {
   id        String   @id @default(uuid())
   name      String
   email     String   @unique
+  password  String?  // null for Google OAuth users
+  googleId  String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   accounts     Account[]
   categories   Category[]
   transactions Transaction[]
+  budgets      Budget[]
+  goals        Goal[]
 }
 
 model Account {
   id        String   @id @default(uuid())
   name      String
-  type      String   // e.g., 'CHECKING', 'CREDIT_CARD', 'SAVINGS', 'CASH'
+  type      String   // e.g., 'CHECKING', 'CREDIT_CARD', 'SAVINGS', 'CASH', 'INVESTMENT'
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   initialBalance Float @default(0)
@@ -42,6 +46,7 @@ model Category {
   updatedAt DateTime @updatedAt
 
   transactions Transaction[]
+  budgets      Budget[]
 }
 
 model Transaction {
@@ -78,4 +83,31 @@ model DeletedTransaction {
   deletedByName   String
   deletedAt       DateTime @default(now())
   createdAt       DateTime
+}
+
+model Budget {
+  id         String   @id @default(uuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  amount     Float    // Monthly limit
+  month      Int      // 1-12
+  year       Int
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([categoryId, month, year, userId])
+}
+
+model Goal {
+  id            String    @id @default(uuid())
+  name          String
+  targetAmount  Float
+  currentAmount Float     @default(0)
+  deadline      DateTime?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }

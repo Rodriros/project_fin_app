@@ -77,11 +77,20 @@ interface I18nState {
   t: (key: keyof typeof translations) => string;
 }
 
-export const useI18nStore = create<I18nState>((set, get) => ({
-  language: 'pt-BR', // Default to Portuguese
-  setLanguage: (lang) => set({ language: lang }),
-  t: (key) => {
-    const lang = get().language;
-    return translations[key as string]?.[lang] || key as string;
-  },
-}));
+import { persist } from 'zustand/middleware';
+
+export const useI18nStore = create<I18nState>()(
+  persist(
+    (set, get) => ({
+      language: 'pt-BR', // Default to Portuguese
+      setLanguage: (lang) => set({ language: lang }),
+      t: (key) => {
+        const lang = get().language;
+        return translations[key as string]?.[lang] || key as string;
+      },
+    }),
+    {
+      name: 'finapp-i18n',
+    }
+  )
+);

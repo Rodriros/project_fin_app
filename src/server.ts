@@ -1,10 +1,13 @@
-import express from 'express'; // Restart nodemon
+import express from 'express';
 import cors from 'cors';
+import jwt from 'jsonwebtoken';
 import { prisma } from './prismaClient';
 
 import routes from './routes';
 import uploadRoutes from './uploadRoutes';
 import reportRoutes from './reportRoutes';
+import authRoutes, { JWT_SECRET } from './authRoutes';
+import budgetRoutes from './budgetRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3333;
@@ -12,40 +15,36 @@ const PORT = process.env.PORT || 3333;
 app.use(cors());
 app.use(express.json());
 
-// Pass mock user ID logic to all api routes
-let defaultUserId: string | null = null;
-app.use(async (req, res, next) => {
-  if (!defaultUserId) {
-    let user = await prisma.user.findFirst({ where: { email: 'default@user.com' } });
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          name: 'Default User',
-          email: 'default@user.com'
-        }
-      });
-    }
-    
-    const account = await prisma.account.findFirst({ where: { userId: user.id } });
-    if (!account) {
-      await prisma.account.create({
-        data: {
-          name: 'Conta Principal',
-          type: 'CASH',
-          userId: user.id
-        }
-      });
-    }
+// Public auth routes (no JWT required)
+app.use('/api', authRoutes);
 
-    defaultUserId = user.id;
+// JWT Authentication middleware for protected routes
+app.use('/api', (req, res, next) => {
+  // Skip auth for auth routes (already handled above)
+  if (req.path.startsWith('/auth/')) {
+    return next();
   }
-  (req as any).userId = defaultUserId;
-  next();
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token de autenticação não fornecido' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    (req as any).userId = decoded.userId;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Token inválido ou expirado' });
+  }
 });
 
 app.use('/api', routes);
 app.use('/api', uploadRoutes);
 app.use('/api', reportRoutes);
+app.use('/api', budgetRoutes);
 
 app.get('/ping', (req, res) => {
   res.json({ message: 'pong' });
@@ -53,18 +52,4 @@ app.get('/ping', (req, res) => {
 
 app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
-  
-  // Purge expired trash items (> 30 days) on startup
-  try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const purged = await prisma.deletedTransaction.deleteMany({
-      where: { deletedAt: { lt: thirtyDaysAgo } }
-    });
-    if (purged.count > 0) {
-      console.log(`Purged ${purged.count} expired trash items.`);
-    }
-  } catch (err) {
-    console.error('Failed to purge expired trash:', err);
-  }
 });

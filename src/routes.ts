@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from './prismaClient';
+import { validateBody, createAccountSchema, updateAccountSchema, createCategorySchema, createTransactionSchema, updateTransactionSchema, batchTransactionsSchema, deleteBatchSchema } from './schemas';
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.get('/accounts', async (req, res) => {
   res.json(accountsWithBalance);
 });
 
-router.post('/accounts', async (req, res) => {
+router.post('/accounts', validateBody(createAccountSchema), async (req, res) => {
   const userId = (req as any).userId;
   const { name, type, initialBalance } = req.body;
   try {
@@ -59,9 +60,9 @@ router.post('/accounts', async (req, res) => {
   }
 });
 
-router.put('/accounts/:id', async (req, res) => {
-  const userId = (req as any).userId;
-  const { id } = req.params;
+router.put('/accounts/:id', validateBody(updateAccountSchema), async (req, res) => {
+  const userId = (req as any).userId as string;
+  const id = req.params.id as string;
   const { name, type, initialBalance } = req.body;
   try {
     const dataToUpdate: any = { name, type };
@@ -69,19 +70,19 @@ router.put('/accounts/:id', async (req, res) => {
       dataToUpdate.initialBalance = initialBalance;
     }
     
-    const account = await prisma.account.update({
+    const account = await prisma.account.updateMany({
       where: { id, userId },
       data: dataToUpdate
     });
-    res.json(account);
+    res.json({ success: true, count: account.count });
   } catch (error) {
     res.status(400).json({ error: 'Failed to update account' });
   }
 });
 
 router.delete('/accounts/:id', async (req, res) => {
-  const userId = (req as any).userId;
-  const { id } = req.params;
+  const userId = (req as any).userId as string;
+  const id = req.params.id as string;
   try {
     // Delete all transactions associated with this account first (cascade delete)
     await prisma.transaction.deleteMany({
@@ -89,7 +90,7 @@ router.delete('/accounts/:id', async (req, res) => {
     });
 
     // Then delete the account
-    await prisma.account.delete({
+    await prisma.account.deleteMany({
       where: { id, userId }
     });
     res.json({ success: true });
@@ -105,7 +106,7 @@ router.get('/categories', async (req, res) => {
   res.json(categories);
 });
 
-router.post('/categories', async (req, res) => {
+router.post('/categories', validateBody(createCategorySchema), async (req, res) => {
   const userId = (req as any).userId;
   const { name, type } = req.body;
   try {
@@ -119,8 +120,8 @@ router.post('/categories', async (req, res) => {
 });
 
 router.delete('/categories/:id', async (req, res) => {
-  const userId = (req as any).userId;
-  const { id } = req.params;
+  const userId = (req as any).userId as string;
+  const id = req.params.id as string;
   try {
     // Check if category has transactions associated
     const txCount = await prisma.transaction.count({
@@ -132,7 +133,7 @@ router.delete('/categories/:id', async (req, res) => {
       });
     }
 
-    await prisma.category.delete({
+    await prisma.category.deleteMany({
       where: { id, userId }
     });
     res.json({ success: true });
@@ -179,15 +180,30 @@ router.get('/transactions', async (req, res) => {
     }
   }
   
-  const transactions = await prisma.transaction.findMany({ 
-    where,
-    include: { account: true, category: true },
-    orderBy: { date: 'desc' }
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 25;
+  const skip = (page - 1) * limit;
+
+  const [transactions, total] = await Promise.all([
+    prisma.transaction.findMany({ 
+      where,
+      include: { account: true, category: true },
+      orderBy: { date: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.transaction.count({ where })
+  ]);
+  
+  res.json({
+    transactions,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit)
   });
-  res.json(transactions);
 });
 
-router.post('/transactions', async (req, res) => {
+router.post('/transactions', validateBody(createTransactionSchema), async (req, res) => {
   const userId = (req as any).userId;
   let { amount, type, date, description, accountId, categoryId, status } = req.body;
   try {
@@ -215,7 +231,39 @@ router.post('/transactions', async (req, res) => {
   }
 });
 
-router.post('/transactions/batch', async (req, res) => {
+// EDIT TRANSACTION
+router.put('/transactions/:id', validateBody(updateTransactionSchema), async (req, res) => {
+  const userId = (req as any).userId as string;
+  const id = req.params.id as string;
+  const { amount, type, date, description, accountId, categoryId, status } = req.body;
+  try {
+    const dataToUpdate: any = {};
+    if (amount !== undefined) dataToUpdate.amount = amount;
+    if (type !== undefined) dataToUpdate.type = type;
+    if (date !== undefined) dataToUpdate.date = new Date(date);
+    if (description !== undefined) dataToUpdate.description = description;
+    if (accountId !== undefined) dataToUpdate.accountId = accountId;
+    if (categoryId !== undefined) dataToUpdate.categoryId = categoryId;
+    if (status !== undefined) dataToUpdate.status = status;
+
+    const transaction = await prisma.transaction.updateMany({
+      where: { id, userId },
+      data: dataToUpdate
+    });
+    
+    // Fetch the updated transaction to return it with includes
+    const updated = await prisma.transaction.findFirst({
+      where: { id, userId },
+      include: { account: true, category: true }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Failed to update transaction' });
+  }
+});
+
+router.post('/transactions/batch', validateBody(batchTransactionsSchema), async (req, res) => {
   const userId = (req as any).userId;
   const { transactions } = req.body;
   try {

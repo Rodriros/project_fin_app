@@ -209,6 +209,24 @@ tr:last-child td {
   font-weight: 600;
 }
 
+.iconBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.iconBtn:hover {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+}
+
 /* Modal Styles */
 .modalOverlay {
   position: fixed;
@@ -232,6 +250,8 @@ tr:last-child td {
   width: 100%;
   max-width: 500px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .formLabel {
@@ -288,4 +308,45 @@ tr:last-child td {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+/* Pagination Styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.pageBtn {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background-color: var(--sidebar-bg);
+  color: white;
+  border-color: var(--sidebar-bg);
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
 }

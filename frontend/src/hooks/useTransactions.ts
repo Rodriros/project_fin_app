@@ -36,8 +36,11 @@ export function useTransactions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<TransactionFilters>({});
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const loadTransactions = useCallback(async (filterOverride?: TransactionFilters) => {
+  const loadTransactions = useCallback(async (filterOverride?: TransactionFilters, pageOverride?: number) => {
     try {
       setLoading(true);
       const activeFilters = filterOverride || filters;
@@ -48,23 +51,33 @@ export function useTransactions() {
       if (activeFilters.endDate) params.append('endDate', activeFilters.endDate);
       if (activeFilters.importStartDate) params.append('importStartDate', activeFilters.importStartDate);
       if (activeFilters.importEndDate) params.append('importEndDate', activeFilters.importEndDate);
+      const currentPage = pageOverride || page;
+      params.append('page', currentPage.toString());
+      params.append('limit', '25'); // Hardcoded 25 items per page for now
       
       const queryString = params.toString();
       const endpoint = `/transactions${queryString ? `?${queryString}` : ''}`;
       
       const data = await fetchApi(endpoint);
-      setTransactions(data);
+      setTransactions(data.transactions || []);
+      setTotalPages(data.totalPages || 1);
+      setTotal(data.total || 0);
+      setPage(currentPage);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, page]);
 
   const applyFilters = useCallback(async (newFilters: TransactionFilters) => {
     setFilters(newFilters);
-    await loadTransactions(newFilters);
+    await loadTransactions(newFilters, 1); // Reset to page 1 on filter change
   }, [loadTransactions]);
+
+  const changePage = useCallback(async (newPage: number) => {
+    await loadTransactions(filters, newPage);
+  }, [loadTransactions, filters]);
 
   const createTransaction = async (data: Partial<Transaction>) => {
     const newTx = await fetchApi('/transactions', {
@@ -74,6 +87,15 @@ export function useTransactions() {
     // Optimistic or real refresh
     await loadTransactions();
     return newTx;
+  };
+
+  const updateTransaction = async (id: string, data: Partial<Transaction>) => {
+    const updatedTx = await fetchApi(`/transactions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    await loadTransactions();
+    return updatedTx;
   };
 
   const batchCreateTransactions = async (transactionsData: Partial<Transaction>[]) => {
@@ -112,12 +134,17 @@ export function useTransactions() {
     loading, 
     error, 
     filters,
+    page,
+    totalPages,
+    total,
     applyFilters,
+    changePage,
     createTransaction, 
+    updateTransaction,
     batchCreateTransactions,
     deleteBatch,
     suggestCategory,
-    refresh: loadTransactions,
+    refresh: () => loadTransactions(filters, page),
     uniqueDescriptions
   };
 }
