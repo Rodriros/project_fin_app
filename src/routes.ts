@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from './prismaClient';
 import { validateBody, createAccountSchema, updateAccountSchema, createCategorySchema, createTransactionSchema, updateTransactionSchema, batchTransactionsSchema, deleteBatchSchema } from './schemas';
+import { DEFAULT_TRANSFER_CATEGORIES } from './authRoutes';
 
 const router = Router();
 
@@ -31,16 +32,34 @@ router.get('/accounts', async (req, res) => {
   const userId = (req as any).userId;
   const accounts = await prisma.account.findMany({ 
     where: { userId },
-    include: { transactions: true }
+    include: { 
+      transactions: true,
+      destinationTransactions: true
+    }
   });
 
   const accountsWithBalance = accounts.map(acc => {
-    const transactionBalance = acc.transactions.reduce((sum, t) => {
+    // Debits and Credits where this account is origin:
+    // INCOME: +amount
+    // EXPENSE: -amount
+    // TRANSFER: -amount (leaves this account)
+    const originBalance = acc.transactions.reduce((sum, t) => {
       if (t.status !== 'COMPLETED') return sum;
-      return t.type === 'INCOME' ? sum + t.amount : sum - t.amount;
+      if (t.type === 'INCOME') return sum + t.amount;
+      if (t.type === 'EXPENSE') return sum - t.amount;
+      if (t.type === 'TRANSFER') return sum - t.amount;
+      return sum;
     }, 0);
-    const balance = (acc.initialBalance || 0) + transactionBalance;
-    const { transactions, ...accountData } = acc;
+
+    // Credits where this account is destination:
+    // TRANSFER: +amount (enters this account)
+    const destinationBalance = acc.destinationTransactions.reduce((sum, t) => {
+      if (t.status !== 'COMPLETED' || t.type !== 'TRANSFER') return sum;
+      return sum + t.amount;
+    }, 0);
+
+    const balance = (acc.initialBalance || 0) + originBalance + destinationBalance;
+    const { transactions, destinationTransactions, ...accountData } = acc;
     return { ...accountData, balance };
   });
 
@@ -65,11 +84,13 @@ router.put('/accounts/:id', validateBody(updateAccountSchema), async (req, res) 
   const id = req.params.id as string;
   const { name, type, initialBalance } = req.body;
   try {
-    const dataToUpdate: any = { name, type };
+    const dataToUpdate: any = {};
+    if (name) dataToUpdate.name = name;
+    if (type) dataToUpdate.type = type;
     if (initialBalance !== undefined) {
       dataToUpdate.initialBalance = initialBalance;
     }
-    
+
     const account = await prisma.account.updateMany({
       where: { id, userId },
       data: dataToUpdate
@@ -86,7 +107,13 @@ router.delete('/accounts/:id', async (req, res) => {
   try {
     // Delete all transactions associated with this account first (cascade delete)
     await prisma.transaction.deleteMany({
-      where: { accountId: id, userId }
+      where: {
+        userId,
+        OR: [
+          { accountId: id },
+          { destinationAccountId: id }
+        ]
+      }
     });
 
     // Then delete the account
@@ -102,7 +129,25 @@ router.delete('/accounts/:id', async (req, res) => {
 // CATEGORIES
 router.get('/categories', async (req, res) => {
   const userId = (req as any).userId;
-  const categories = await prisma.category.findMany({ where: { userId } });
+  let categories = await prisma.category.findMany({ where: { userId } });
+
+  // If user doesn't have TRANSFER categories yet, seed them automatically
+  const hasTransferCats = categories.some(c => c.type === 'TRANSFER');
+  if (!hasTransferCats && userId) {
+    try {
+      await prisma.$transaction(
+        DEFAULT_TRANSFER_CATEGORIES.map(cat => 
+          prisma.category.create({
+            data: { name: cat.name, type: cat.type, userId }
+          })
+        )
+      );
+      categories = await prisma.category.findMany({ where: { userId } });
+    } catch (e) {
+      console.error('Failed to auto-seed transfer categories:', e);
+    }
+  }
+
   res.json(categories);
 });
 
@@ -133,11 +178,19 @@ router.delete('/categories/:id', async (req, res) => {
       });
     }
 
-    await prisma.category.deleteMany({
-      where: { id, userId }
-    });
+    // Delete any associated budgets first, then the category in a transaction
+    await prisma.$transaction([
+      prisma.budget.deleteMany({
+        where: { categoryId: id, userId }
+      }),
+      prisma.category.deleteMany({
+        where: { id, userId }
+      })
+    ]);
+
     res.json({ success: true });
   } catch (error) {
+    console.error('Erro ao excluir categoria:', error);
     res.status(400).json({ error: 'Falha ao excluir categoria' });
   }
 });
@@ -149,9 +202,13 @@ router.get('/transactions', async (req, res) => {
   // Build filter conditions
   const where: any = { userId };
   
-  // Filter by account
+  // Filter by account (either origin or destination)
   if (req.query.accountId) {
-    where.accountId = req.query.accountId as string;
+    const accId = req.query.accountId as string;
+    where.OR = [
+      { accountId: accId },
+      { destinationAccountId: accId }
+    ];
   }
   
   // Filter by transaction date range
@@ -187,7 +244,11 @@ router.get('/transactions', async (req, res) => {
   const [transactions, total] = await Promise.all([
     prisma.transaction.findMany({ 
       where,
-      include: { account: true, category: true },
+      include: { 
+        account: true, 
+        destinationAccount: true, 
+        category: true 
+      },
       orderBy: { date: 'desc' },
       skip,
       take: limit,
@@ -205,11 +266,26 @@ router.get('/transactions', async (req, res) => {
 
 router.post('/transactions', validateBody(createTransactionSchema), async (req, res) => {
   const userId = (req as any).userId;
-  let { amount, type, date, description, accountId, categoryId, status } = req.body;
+  let { amount, type, date, description, accountId, destinationAccountId, categoryId, status } = req.body;
   try {
     if (!accountId) {
       const defaultAccount = await prisma.account.findFirst({ where: { userId } });
       if (defaultAccount) accountId = defaultAccount.id;
+    }
+
+    if (type === 'TRANSFER') {
+      if (!destinationAccountId) {
+        return res.status(400).json({ error: 'Conta de destino é obrigatória para transferências' });
+      }
+      if (destinationAccountId === accountId) {
+        return res.status(400).json({ error: 'Conta de destino deve ser diferente da conta de origem' });
+      }
+      const destAcc = await prisma.account.findFirst({ where: { id: destinationAccountId, userId } });
+      if (!destAcc) {
+        return res.status(400).json({ error: 'Conta de destino inválida ou não encontrada' });
+      }
+    } else {
+      destinationAccountId = null;
     }
 
     const transaction = await prisma.transaction.create({
@@ -219,9 +295,15 @@ router.post('/transactions', validateBody(createTransactionSchema), async (req, 
         date: new Date(date),
         description,
         accountId,
+        destinationAccountId: destinationAccountId || null,
         categoryId,
         status: status || 'COMPLETED',
         userId
+      },
+      include: {
+        account: true,
+        destinationAccount: true,
+        category: true
       }
     });
     res.status(201).json(transaction);
@@ -235,7 +317,7 @@ router.post('/transactions', validateBody(createTransactionSchema), async (req, 
 router.put('/transactions/:id', validateBody(updateTransactionSchema), async (req, res) => {
   const userId = (req as any).userId as string;
   const id = req.params.id as string;
-  const { amount, type, date, description, accountId, categoryId, status } = req.body;
+  const { amount, type, date, description, accountId, destinationAccountId, categoryId, status } = req.body;
   try {
     const dataToUpdate: any = {};
     if (amount !== undefined) dataToUpdate.amount = amount;
@@ -243,10 +325,17 @@ router.put('/transactions/:id', validateBody(updateTransactionSchema), async (re
     if (date !== undefined) dataToUpdate.date = new Date(date);
     if (description !== undefined) dataToUpdate.description = description;
     if (accountId !== undefined) dataToUpdate.accountId = accountId;
+    if (destinationAccountId !== undefined) dataToUpdate.destinationAccountId = destinationAccountId;
     if (categoryId !== undefined) dataToUpdate.categoryId = categoryId;
     if (status !== undefined) dataToUpdate.status = status;
 
-    const transaction = await prisma.transaction.updateMany({
+    if (type === 'TRANSFER' && destinationAccountId) {
+      if (destinationAccountId === accountId) {
+        return res.status(400).json({ error: 'Conta de destino deve ser diferente da conta de origem' });
+      }
+    }
+
+    await prisma.transaction.updateMany({
       where: { id, userId },
       data: dataToUpdate
     });
@@ -254,7 +343,7 @@ router.put('/transactions/:id', validateBody(updateTransactionSchema), async (re
     // Fetch the updated transaction to return it with includes
     const updated = await prisma.transaction.findFirst({
       where: { id, userId },
-      include: { account: true, category: true }
+      include: { account: true, destinationAccount: true, category: true }
     });
     res.json(updated);
   } catch (error) {
@@ -273,6 +362,7 @@ router.post('/transactions/batch', validateBody(batchTransactionsSchema), async 
       date: new Date(t.date),
       description: t.description,
       accountId: t.accountId,
+      destinationAccountId: t.destinationAccountId || null,
       categoryId: t.categoryId,
       status: t.status || 'COMPLETED',
       userId
@@ -306,7 +396,7 @@ router.post('/transactions/delete-batch', async (req, res) => {
     // Get the transactions to be deleted (with account and category names)
     const transactionsToDelete = await prisma.transaction.findMany({
       where: { id: { in: transactionIds }, userId },
-      include: { account: true, category: true }
+      include: { account: true, destinationAccount: true, category: true }
     });
 
     if (transactionsToDelete.length === 0) {
@@ -328,6 +418,8 @@ router.post('/transactions/delete-batch', async (req, res) => {
             status: tx.status,
             accountId: tx.accountId,
             accountName: tx.account?.name || '',
+            destinationAccountId: tx.destinationAccountId || null,
+            destinationAccountName: tx.destinationAccount?.name || null,
             categoryId: tx.categoryId,
             categoryName: tx.category?.name || null,
             userId: tx.userId,
@@ -404,6 +496,7 @@ router.post('/trash/:id/restore', async (req, res) => {
           description: trashItem.description,
           status: trashItem.status,
           accountId: trashItem.accountId,
+          destinationAccountId: trashItem.destinationAccountId || null,
           categoryId: trashItem.categoryId,
           userId: trashItem.userId
         }
@@ -465,6 +558,7 @@ router.post('/trash/restore-batch', async (req, res) => {
             description: item.description,
             status: item.status,
             accountId: item.accountId,
+            destinationAccountId: item.destinationAccountId || null,
             categoryId: item.categoryId,
             userId: item.userId
           }

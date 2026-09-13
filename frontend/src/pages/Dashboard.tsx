@@ -60,7 +60,7 @@ const Dashboard: React.FC = () => {
         <h2 style={{ color: 'var(--text-main)', fontSize: '1.25rem', fontWeight: 600 }}>Dashboard</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', cursor: 'pointer' }}>
-            <Download size={16} /> Exportar
+            <Download size={16} /> {t('export_btn')}
           </button>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem', paddingLeft: '0.5rem', borderLeft: '1px solid var(--border-color)' }}>
@@ -70,8 +70,8 @@ const Dashboard: React.FC = () => {
               onChange={e => setFilterMode(e.target.value as 'month' | 'custom')}
               style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)' }}
             >
-              <option value="month">Mensal</option>
-              <option value="custom">Personalizado</option>
+              <option value="month">{t('filter_monthly')}</option>
+              <option value="custom">{t('filter_custom')}</option>
             </select>
 
             {filterMode === 'month' ? (

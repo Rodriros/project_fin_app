@@ -4,7 +4,7 @@ import { fetchApi } from '../services/api';
 export interface Category {
   id: string;
   name: string;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
 }
 
 export function useCategories() {
@@ -24,7 +24,7 @@ export function useCategories() {
     }
   };
 
-  const createCategory = async (name: string, type: 'INCOME' | 'EXPENSE') => {
+  const createCategory = async (name: string, type: 'INCOME' | 'EXPENSE' | 'TRANSFER') => {
     const data = await fetchApi('/categories', {
       method: 'POST',
       body: JSON.stringify({ name, type }),

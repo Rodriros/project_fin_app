@@ -33,13 +33,14 @@ model Account {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  transactions Transaction[]
+  transactions            Transaction[] @relation("AccountTransactions")
+  destinationTransactions Transaction[] @relation("AccountDestinationTransactions")
 }
 
 model Category {
   id        String   @id @default(uuid())
   name      String
-  type      String   // e.g., 'INCOME', 'EXPENSE'
+  type      String   // e.g., 'INCOME', 'EXPENSE', 'TRANSFER'
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
@@ -50,39 +51,43 @@ model Category {
 }
 
 model Transaction {
-  id          String   @id @default(uuid())
-  amount      Float
-  type        String   // 'INCOME' or 'EXPENSE'
-  date        DateTime
-  description String
-  status      String   @default("COMPLETED") // 'PENDING', 'COMPLETED'
-  accountId   String
-  account     Account  @relation(fields: [accountId], references: [id])
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id])
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                   String    @id @default(uuid())
+  amount               Float
+  type                 String    // 'INCOME', 'EXPENSE', 'TRANSFER'
+  date                 DateTime
+  description          String
+  status               String    @default("COMPLETED") // 'PENDING', 'COMPLETED'
+  accountId            String
+  account              Account   @relation("AccountTransactions", fields: [accountId], references: [id])
+  destinationAccountId String?
+  destinationAccount   Account?  @relation("AccountDestinationTransactions", fields: [destinationAccountId], references: [id])
+  categoryId           String?
+  category             Category? @relation(fields: [categoryId], references: [id])
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id])
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }
 
 model DeletedTransaction {
-  id              String   @id @default(uuid())
-  originalId      String
-  amount          Float
-  type            String
-  date            DateTime
-  description     String
-  status          String
-  accountId       String
-  accountName     String   @default("")
-  categoryId      String?
-  categoryName    String?
-  userId          String
-  deletedByUserId String
-  deletedByName   String
-  deletedAt       DateTime @default(now())
-  createdAt       DateTime
+  id                     String   @id @default(uuid())
+  originalId             String
+  amount                 Float
+  type                   String
+  date                   DateTime
+  description            String
+  status                 String
+  accountId              String
+  accountName            String   @default("")
+  destinationAccountId   String?
+  destinationAccountName String?
+  categoryId             String?
+  categoryName           String?
+  userId                 String
+  deletedByUserId        String
+  deletedByName          String
+  deletedAt              DateTime @default(now())
+  createdAt              DateTime
 }
 
 model Budget {
@@ -106,6 +111,7 @@ model Goal {
   targetAmount  Float
   currentAmount Float     @default(0)
   deadline      DateTime?
+  color         String?   @default("#6366f1")
   userId        String
   user          User      @relation(fields: [userId], references: [id])
   createdAt     DateTime  @default(now())

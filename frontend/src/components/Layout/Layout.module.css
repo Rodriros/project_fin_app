@@ -28,7 +28,16 @@
 }
 
 .logoIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--accent-lime);
+  filter: drop-shadow(0 0 8px rgba(183, 228, 82, 0.4));
+  transition: transform 0.2s ease;
+}
+
+.logo:hover .logoIcon {
+  transform: rotate(12deg) scale(1.08);
 }
 
 .nav {

@@ -3,17 +3,21 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'FinApp',
-        short_name: 'FinApp',
-        description: 'Seu gerenciador financeiro pessoal',
-        theme_color: '#0f0f23',
-        background_color: '#0f0f23',
+        name: 'FinRod APP',
+        short_name: 'FinRod APP',
+        description: 'FinRod APP - Seu gerenciador financeiro inteligente',
+        theme_color: '#0d2218',
+        background_color: '#0d2218',
         display: 'standalone',
         icons: [
           {

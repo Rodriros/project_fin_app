@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, RotateCcw, X, Plus } from 'lucide-react';
+import { Trash2, RotateCcw, X, Plus, Sliders, Globe, Check } from 'lucide-react';
 import { useI18nStore } from '../i18n';
 import { useCategories } from '../hooks/useCategories';
 import { useTrash } from '../hooks/useTrash';
@@ -17,7 +17,7 @@ const Settings: React.FC = () => {
   // Category management state
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState('');
-  const [newCatType, setNewCatType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
+  const [newCatType, setNewCatType] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER'>('EXPENSE');
   const [deletingCatId, setDeletingCatId] = useState<string | null>(null);
   const [catError, setCatError] = useState<string | null>(null);
 
@@ -29,11 +29,10 @@ const Settings: React.FC = () => {
 
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return;
-    setCatError(null);
     try {
+      setCatError(null);
       await createCategory(newCatName.trim(), newCatType);
       setNewCatName('');
-      setNewCatType('EXPENSE');
       setIsAddingCategory(false);
     } catch (err: any) {
       setCatError(err.message || 'Erro ao criar categoria');
@@ -41,8 +40,8 @@ const Settings: React.FC = () => {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    setCatError(null);
     try {
+      setCatError(null);
       await deleteCategory(id);
       setDeletingCatId(null);
     } catch (err: any) {
@@ -51,6 +50,7 @@ const Settings: React.FC = () => {
     }
   };
 
+  // Trash handlers
   const toggleTrashSelect = (id: string) => {
     setSelectedTrashIds(prev => {
       const next = new Set(prev);
@@ -67,18 +67,21 @@ const Settings: React.FC = () => {
     if (selectedTrashIds.size === trashItems.length) {
       setSelectedTrashIds(new Set());
     } else {
-      setSelectedTrashIds(new Set(trashItems.map(t => t.id)));
+      setSelectedTrashIds(new Set(trashItems.map(i => i.id)));
     }
   };
 
   const handleRestore = async (id: string) => {
-    setRestoring(true);
     try {
+      setRestoring(true);
       await restoreItem(id);
-      selectedTrashIds.delete(id);
-      setSelectedTrashIds(new Set(selectedTrashIds));
-    } catch (err: any) {
-      alert('Erro ao restaurar: ' + err.message);
+      setSelectedTrashIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    } catch (err) {
+      console.error(err);
     } finally {
       setRestoring(false);
     }
@@ -86,12 +89,12 @@ const Settings: React.FC = () => {
 
   const handleRestoreBatch = async () => {
     if (selectedTrashIds.size === 0) return;
-    setRestoring(true);
     try {
+      setRestoring(true);
       await restoreBatch(Array.from(selectedTrashIds));
       setSelectedTrashIds(new Set());
-    } catch (err: any) {
-      alert('Erro ao restaurar: ' + err.message);
+    } catch (err) {
+      console.error(err);
     } finally {
       setRestoring(false);
     }
@@ -99,11 +102,10 @@ const Settings: React.FC = () => {
 
   const getDaysRemaining = (deletedAt: string) => {
     const deleted = new Date(deletedAt);
-    const expiry = new Date(deleted);
-    expiry.setDate(expiry.getDate() + 30);
+    const expires = new Date(deleted.getTime() + 30 * 24 * 60 * 60 * 1000);
     const now = new Date();
-    const diff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(0, diff);
+    const diffDays = Math.ceil((expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
   };
 
   return (
@@ -111,19 +113,20 @@ const Settings: React.FC = () => {
       {/* Tab Navigation */}
       <div className={styles.tabNav}>
         <button 
-          className={`${styles.tab} ${activeTab === 'settings' ? styles.activeTab : ''}`}
+          className={`${styles.tabButton} ${activeTab === 'settings' ? styles.activeTab : ''}`}
           onClick={() => setActiveTab('settings')}
           id="tab-settings"
         >
-          Configurações
+          <Sliders size={16} />
+          <span>{t('general_settings')}</span>
         </button>
         <button 
-          className={`${styles.tab} ${activeTab === 'trash' ? styles.activeTab : ''}`}
+          className={`${styles.tabButton} ${activeTab === 'trash' ? styles.activeTab : ''}`}
           onClick={() => setActiveTab('trash')}
           id="tab-trash"
         >
-          <Trash2 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} />
-          Lixeira
+          <Trash2 size={16} />
+          <span>{t('trash_title')}</span>
           {trashItems.length > 0 && (
             <span className={styles.trashBadgeCount}>{trashItems.length}</span>
           )}
@@ -131,20 +134,47 @@ const Settings: React.FC = () => {
       </div>
 
       {activeTab === 'settings' && (
-        <>
+        <div className={styles.settingsGrid}>
           {/* Language Settings */}
           <div className={`glass-panel ${styles.section}`}>
-            <h3 className={styles.sectionTitle}>{t('language_settings')}</h3>
-            <div className={styles.settingRow}>
-              <span className={styles.settingLabel}>{t('language_settings')}</span>
-              <select 
-                className={styles.selectInput}
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as any)}
-              >
-                <option value="pt-BR">Português (BR)</option>
-                <option value="en">English</option>
-              </select>
+            <h3 className={styles.sectionTitle}>
+              <Globe size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--accent-lime)' }} />
+              {t('language_settings')}
+            </h3>
+            <div className={styles.settingItem}>
+              <span className={styles.settingLabel}>{t('select_language')}</span>
+              <div className={styles.languageOptions}>
+                <button 
+                  type="button"
+                  className={`${styles.langButton} ${language === 'en' ? styles.activeLang : ''}`}
+                  onClick={() => setLanguage('en')}
+                  id="lang-en"
+                >
+                  <span className={styles.langFlag}>🇺🇸</span>
+                  <span>English</span>
+                  {language === 'en' && <Check size={16} className={styles.langCheck} />}
+                </button>
+                <button 
+                  type="button"
+                  className={`${styles.langButton} ${language === 'pt-BR' ? styles.activeLang : ''}`}
+                  onClick={() => setLanguage('pt-BR')}
+                  id="lang-pt"
+                >
+                  <span className={styles.langFlag}>🇧🇷</span>
+                  <span>Português (BR)</span>
+                  {language === 'pt-BR' && <Check size={16} className={styles.langCheck} />}
+                </button>
+                <button 
+                  type="button"
+                  className={`${styles.langButton} ${language === 'es' ? styles.activeLang : ''}`}
+                  onClick={() => setLanguage('es')}
+                  id="lang-es"
+                >
+                  <span className={styles.langFlag}>🇪🇸</span>
+                  <span>Español</span>
+                  {language === 'es' && <Check size={16} className={styles.langCheck} />}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -189,11 +219,12 @@ const Settings: React.FC = () => {
                 <select 
                   className={styles.catFormSelect}
                   value={newCatType} 
-                  onChange={e => setNewCatType(e.target.value as 'INCOME' | 'EXPENSE')}
+                  onChange={e => setNewCatType(e.target.value as 'INCOME' | 'EXPENSE' | 'TRANSFER')}
                   id="select-new-category-type"
                 >
                   <option value="EXPENSE">Despesa</option>
                   <option value="INCOME">Receita</option>
+                  <option value="TRANSFER">Transferência</option>
                 </select>
                 <button className={styles.catFormSaveBtn} onClick={handleAddCategory} id="btn-save-category">
                   Salvar
@@ -218,10 +249,14 @@ const Settings: React.FC = () => {
                     <div className={styles.categoryInfo}>
                       <span className={styles.settingLabel}>{cat.name}</span>
                       <span className={styles.categoryBadge} style={{
-                        backgroundColor: cat.type === 'INCOME' ? 'var(--positive-bg)' : 'var(--negative-bg)',
-                        color: cat.type === 'INCOME' ? 'var(--positive-color)' : 'var(--negative-color)'
+                        backgroundColor: cat.type === 'INCOME' 
+                          ? 'var(--positive-bg)' 
+                          : (cat.type === 'TRANSFER' ? 'rgba(59, 130, 246, 0.15)' : 'var(--negative-bg)'),
+                        color: cat.type === 'INCOME' 
+                          ? 'var(--positive-color)' 
+                          : (cat.type === 'TRANSFER' ? '#3b82f6' : 'var(--negative-color)')
                       }}>
-                        {cat.type === 'INCOME' ? t('type_income') : t('type_expense')}
+                        {cat.type === 'INCOME' ? t('type_income') : (cat.type === 'TRANSFER' ? t('type_transfer') : t('type_expense'))}
                       </span>
                     </div>
                     <div className={styles.categoryActions}>
@@ -256,7 +291,7 @@ const Settings: React.FC = () => {
               )}
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {activeTab === 'trash' && (

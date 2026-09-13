@@ -87,6 +87,48 @@ const Reports: React.FC = () => {
               </td>
             </tr>
 
+            {/* TRANSFERS (Account Level Adjustment) */}
+            {!isConsolidated && (Number(dreData.periodTransfersOut || 0) > 0 || Number(dreData.periodTransfersIn || 0) > 0) && (
+              <>
+                {Number(dreData.periodTransfersOut || 0) > 0 && (
+                  <tr className={styles.subItem} style={{ color: 'var(--text-muted)' }}>
+                    <td>(-) Transferências Enviadas</td>
+                    <td className={`${styles.amount} ${styles.negative}`}>
+                      - {Number(dreData.periodTransfersOut).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                )}
+                {Number(dreData.periodTransfersIn || 0) > 0 && (
+                  <tr className={styles.subItem} style={{ color: 'var(--text-muted)' }}>
+                    <td>(+) Transferências Recebidas</td>
+                    <td className={`${styles.amount} ${styles.positive}`}>
+                      + {Number(dreData.periodTransfersIn).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                )}
+              </>
+            )}
+
+            {/* TRANSFERS BREAKDOWN (Informational / Categories) */}
+            {dreData.transfersByCategory && dreData.transfersByCategory.length > 0 && (
+              <>
+                <tr className={styles.sectionRow}>
+                  <td className={styles.sectionTitle}>
+                    {t('dre_transfers')} {isConsolidated ? '(Neutras no Resultado Global)' : ''}
+                  </td>
+                  <td className={styles.amount} style={{ color: 'var(--text-muted)' }}>
+                    {dreData.transfersByCategory.reduce((sum: number, c: any) => sum + c.total, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                {dreData.transfersByCategory.map((tr: any) => (
+                  <tr key={tr.categoryId} className={styles.subItem}>
+                    <td>{tr.name}</td>
+                    <td className={styles.amount}>{tr.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </>
+            )}
+
             {/* NET RESULT / FINAL BALANCE */}
             <tr className={styles.totalRow}>
               <td>{isConsolidated ? 'Saldo Final Consolidado' : 'Saldo Final da Conta'}</td>

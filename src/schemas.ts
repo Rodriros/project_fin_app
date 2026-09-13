@@ -33,26 +33,36 @@ export const updateAccountSchema = z.object({
 // ===== CATEGORY SCHEMAS =====
 export const createCategorySchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
-  type: z.enum(['INCOME', 'EXPENSE'], { message: 'Tipo deve ser INCOME ou EXPENSE' }),
+  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER'], { message: 'Tipo deve ser INCOME, EXPENSE ou TRANSFER' }),
 });
 
 // ===== TRANSACTION SCHEMAS =====
 export const createTransactionSchema = z.object({
   amount: z.number().positive('Valor deve ser positivo'),
-  type: z.enum(['INCOME', 'EXPENSE']),
+  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']),
   date: z.string().min(1, 'Data é obrigatória'),
   description: z.string().min(1, 'Descrição é obrigatória'),
   accountId: z.string().optional(),
+  destinationAccountId: z.string().optional(),
   categoryId: z.string().optional(),
   status: z.enum(['PENDING', 'COMPLETED']).optional().default('COMPLETED'),
+}).refine((data) => {
+  if (data.type === 'TRANSFER') {
+    return Boolean(data.destinationAccountId && data.destinationAccountId !== data.accountId);
+  }
+  return true;
+}, {
+  message: 'Para transferências, a conta de destino é obrigatória e deve ser diferente da conta de origem',
+  path: ['destinationAccountId']
 });
 
 export const updateTransactionSchema = z.object({
   amount: z.number().positive().optional(),
-  type: z.enum(['INCOME', 'EXPENSE']).optional(),
+  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']).optional(),
   date: z.string().optional(),
   description: z.string().optional(),
   accountId: z.string().optional(),
+  destinationAccountId: z.string().nullable().optional(),
   categoryId: z.string().nullable().optional(),
   status: z.enum(['PENDING', 'COMPLETED']).optional(),
 });
@@ -60,10 +70,11 @@ export const updateTransactionSchema = z.object({
 export const batchTransactionsSchema = z.object({
   transactions: z.array(z.object({
     amount: z.number(),
-    type: z.enum(['INCOME', 'EXPENSE']),
+    type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']),
     date: z.string(),
     description: z.string(),
     accountId: z.string().optional(),
+    destinationAccountId: z.string().optional(),
     categoryId: z.string().optional(),
     status: z.string().optional(),
   })).min(1),
@@ -87,6 +98,8 @@ export const createGoalSchema = z.object({
   targetAmount: z.number().positive('Valor alvo deve ser positivo'),
   currentAmount: z.number().min(0).optional().default(0),
   deadline: z.string().optional(),
+  targetDate: z.string().optional(),
+  color: z.string().optional().default('#6366f1'),
 });
 
 export const updateGoalSchema = z.object({
@@ -94,6 +107,8 @@ export const updateGoalSchema = z.object({
   targetAmount: z.number().positive().optional(),
   currentAmount: z.number().min(0).optional(),
   deadline: z.string().nullable().optional(),
+  targetDate: z.string().nullable().optional(),
+  color: z.string().optional(),
 });
 
 // ===== VALIDATION MIDDLEWARE =====

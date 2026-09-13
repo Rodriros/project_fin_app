@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchApi } from '../services/api';
 
 interface DashboardSummary {
@@ -21,18 +21,23 @@ export interface AccountDRE {
   priorBalance: number;
   periodIncome: number;
   periodExpense: number;
+  periodTransfersOut?: number;
+  periodTransfersIn?: number;
   finalBalance: number;
   incomeByCategory: CategoryTotal[];
   expenseByCategory: CategoryTotal[];
+  transfersByCategory?: CategoryTotal[];
 }
 
 export interface ConsolidatedDRE {
   priorBalance: number;
   periodIncome: number;
   periodExpense: number;
+  periodTransfers?: number;
   finalBalance: number;
   incomeByCategory: CategoryTotal[];
   expenseByCategory: CategoryTotal[];
+  transfersByCategory?: CategoryTotal[];
   netBalance: number;
   isProfitable: boolean;
 }
@@ -41,6 +46,7 @@ export interface DashboardData {
   summary: DashboardSummary;
   incomeByCategory: CategoryTotal[];
   expenseByCategory: CategoryTotal[];
+  transfersByCategory?: CategoryTotal[];
   accounts?: AccountDRE[];
   consolidated?: ConsolidatedDRE;
 }
@@ -50,7 +56,7 @@ export function useDashboardData(startDate?: string, endDate?: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       let query = '';
@@ -65,11 +71,11 @@ export function useDashboardData(startDate?: string, endDate?: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate]);
 
   useEffect(() => {
     loadData();
-  }, [startDate, endDate]);
+  }, [loadData]);
 
   return { data, loading, error, refresh: loadData };
 }

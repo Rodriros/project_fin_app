@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2, Wallet, X, Landmark, TrendingUp, CreditCard } from 'lucide-react';
 import { useI18nStore } from '../i18n';
 import { fetchApi } from '../services/api';
@@ -28,7 +28,7 @@ const Accounts: React.FC = () => {
     initialBalance: '0'
   });
 
-  const loadAccounts = async () => {
+  const loadAccounts = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchApi('/accounts');
@@ -38,11 +38,11 @@ const Accounts: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadAccounts();
-  }, []);
+  }, [loadAccounts]);
 
   const openCreateModal = () => {
     setEditingAccount(null);
@@ -55,7 +55,14 @@ const Accounts: React.FC = () => {
     // Determine if it's a standard type
     const standardTypes = ['CHECKING', 'CREDIT_CARD', 'SAVINGS', 'CASH', 'INVESTMENT'];
     if (standardTypes.includes(acc.type)) {
-      setFormData({ name: acc.name, type: acc.type, customType: '', initialBalance: String(acc.initialBalance || 0) });
+      if (acc.type === 'INVESTMENT' && acc.name.includes(' - ')) {
+        const parts = acc.name.split(' - ');
+        const custom = parts.pop() || '';
+        const baseName = parts.join(' - ');
+        setFormData({ name: baseName, type: acc.type, customType: custom, initialBalance: String(acc.initialBalance || 0) });
+      } else {
+        setFormData({ name: acc.name, type: acc.type, customType: '', initialBalance: String(acc.initialBalance || 0) });
+      }
     } else {
       setFormData({ name: acc.name, type: 'OTHER', customType: acc.type, initialBalance: String(acc.initialBalance || 0) });
     }
@@ -64,13 +71,14 @@ const Accounts: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name) return;
+    if (!formData.name.trim()) return;
 
     // For OTHER and INVESTMENT, we store the custom specification in customType
     const finalType = formData.type === 'OTHER' ? (formData.customType || 'OTHER') : formData.type;
-    const finalName = formData.type === 'INVESTMENT' && formData.customType 
-      ? `${formData.name} - ${formData.customType}` 
-      : formData.name;
+    const cleanName = formData.name.trim();
+    const finalName = formData.type === 'INVESTMENT' && formData.customType?.trim() 
+      ? (cleanName.endsWith(` - ${formData.customType.trim()}`) ? cleanName : `${cleanName} - ${formData.customType.trim()}`)
+      : cleanName;
 
     try {
       if (editingAccount) {
@@ -86,8 +94,8 @@ const Accounts: React.FC = () => {
       }
       setIsModalOpen(false);
       loadAccounts();
-    } catch (err) {
-      alert("Error saving account");
+    } catch (err: any) {
+      alert(err.message || "Erro ao salvar conta");
     }
   };
 

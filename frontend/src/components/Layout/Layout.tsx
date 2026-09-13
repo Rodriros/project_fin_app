@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Receipt, PieChart, Settings, Sun, Moon, Wallet, LogOut, Target } from 'lucide-react';
+import { LayoutDashboard, Receipt, PieChart, Settings, Sun, Moon, Wallet, LogOut, Target, Clover } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 import { useI18nStore } from '../../i18n';
 import { useAuthStore } from '../../store/authStore';
@@ -16,7 +16,7 @@ const Layout: React.FC = () => {
   const navLinks = [
     { name: t('nav_overview'), path: '/', icon: <LayoutDashboard size={20} /> },
     { name: t('nav_transactions'), path: '/transactions', icon: <Receipt size={20} /> },
-    { name: 'Metas & Orçamentos', path: '/budgets', icon: <Target size={20} /> },
+    { name: t('nav_budgets'), path: '/budgets', icon: <Target size={20} /> },
     { name: t('nav_reports'), path: '/reports', icon: <PieChart size={20} /> },
     { name: t('nav_accounts'), path: '/accounts', icon: <Wallet size={20} /> },
     { name: t('nav_settings'), path: '/settings', icon: <Settings size={20} /> },
@@ -37,8 +37,10 @@ const Layout: React.FC = () => {
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
-          <div className={styles.logoIcon}>✤</div>
-          FinApp
+          <div className={styles.logoIcon}>
+            <Clover size={26} strokeWidth={2.4} />
+          </div>
+          FinRod APP
         </div>
         
         <nav className={styles.nav}>

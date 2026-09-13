@@ -1,21 +1,28 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchApi } from '../services/api';
 
 export interface Transaction {
   id: string;
   amount: number;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
   date: string;
   description: string;
   status: string;
   accountId: string;
-  categoryId: string | null;
+  destinationAccountId?: string | null;
   createdAt: string;
+  isInvoicePayment?: boolean;
   account?: {
     id: string;
     name: string;
     type: string;
   };
+  destinationAccount?: {
+    id: string;
+    name: string;
+    type: string;
+  } | null;
+  categoryId?: string | null;
   category?: {
     id: string;
     name: string;
@@ -40,10 +47,19 @@ export function useTransactions() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
+  const filtersRef = useRef(filters);
+  const pageRef = useRef(page);
+
+  useEffect(() => {
+    filtersRef.current = filters;
+    pageRef.current = page;
+  }, [filters, page]);
+
   const loadTransactions = useCallback(async (filterOverride?: TransactionFilters, pageOverride?: number) => {
     try {
       setLoading(true);
-      const activeFilters = filterOverride || filters;
+      const activeFilters = filterOverride || filtersRef.current;
+      const currentPage = pageOverride || pageRef.current;
       const params = new URLSearchParams();
       
       if (activeFilters.accountId) params.append('accountId', activeFilters.accountId);
@@ -51,7 +67,6 @@ export function useTransactions() {
       if (activeFilters.endDate) params.append('endDate', activeFilters.endDate);
       if (activeFilters.importStartDate) params.append('importStartDate', activeFilters.importStartDate);
       if (activeFilters.importEndDate) params.append('importEndDate', activeFilters.importEndDate);
-      const currentPage = pageOverride || page;
       params.append('page', currentPage.toString());
       params.append('limit', '25'); // Hardcoded 25 items per page for now
       
@@ -68,7 +83,7 @@ export function useTransactions() {
     } finally {
       setLoading(false);
     }
-  }, [filters, page]);
+  }, []);
 
   const applyFilters = useCallback(async (newFilters: TransactionFilters) => {
     setFilters(newFilters);
@@ -76,8 +91,8 @@ export function useTransactions() {
   }, [loadTransactions]);
 
   const changePage = useCallback(async (newPage: number) => {
-    await loadTransactions(filters, newPage);
-  }, [loadTransactions, filters]);
+    await loadTransactions(filtersRef.current, newPage);
+  }, [loadTransactions]);
 
   const createTransaction = async (data: Partial<Transaction>) => {
     const newTx = await fetchApi('/transactions', {
@@ -127,7 +142,7 @@ export function useTransactions() {
 
   useEffect(() => {
     loadTransactions();
-  }, []);
+  }, [loadTransactions]);
 
   return { 
     transactions, 

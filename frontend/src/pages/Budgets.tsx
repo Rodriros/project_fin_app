@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Target, PiggyBank, Edit3, Trash2, X, AlertTriangle } from 'lucide-react';
 import { fetchApi } from '../services/api';
 import { useCategories } from '../hooks/useCategories';
@@ -43,7 +43,7 @@ const Budgets: React.FC = () => {
   const [budgetForm, setBudgetForm] = useState({ categoryId: '', amount: '' });
   const [goalForm, setGoalForm] = useState({ name: '', targetAmount: '', currentAmount: '', targetDate: '', color: '#6366f1' });
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [budgetsData, goalsData] = await Promise.all([
@@ -57,11 +57,11 @@ const Budgets: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   // --- Budget Handlers ---
   const handleSaveBudget = async (e: React.FormEvent) => {
