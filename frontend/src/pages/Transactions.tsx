@@ -564,17 +564,16 @@ const Transactions: React.FC = () => {
                     tx.account?.name || '---'
                   )}
                 </td>
-                <td style={{ color: 'var(--text-muted)' }}>{new Date(tx.date).toLocaleDateString()}</td>
+                <td style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                  {new Date(tx.date).toLocaleDateString('pt-BR')}
+                </td>
                 <td>
-                  <span style={{ 
-                    color: tx.status === 'COMPLETED' ? 'var(--positive-color)' : 'var(--text-muted)',
-                    fontSize: '0.875rem'
-                  }}>
+                  <span className={`${styles.statusBadge} ${tx.status === 'COMPLETED' ? styles.statusCompleted : styles.statusPending}`}>
                     {tx.status === 'COMPLETED' ? t('status_completed') : t('status_pending')}
                   </span>
                 </td>
                 <td 
-                  style={{ textAlign: 'right' }} 
+                  style={{ textAlign: 'right', fontWeight: 600 }}
                   className={
                     tx.type === 'TRANSFER' 
                       ? styles.transferAmount 
@@ -596,6 +595,85 @@ const Transactions: React.FC = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card Feed View */}
+      <div className={styles.mobileCardList}>
+        {transactions.length === 0 ? (
+          <div className={`glass-panel ${styles.mobileEmpty}`}>
+            {t('no_transactions_found')}
+          </div>
+        ) : (
+          transactions.map((tx) => (
+            <div 
+              key={tx.id} 
+              className={`glass-panel ${styles.mobileTxCard} ${tx.type === 'TRANSFER' ? styles.mobileTransferCard : ''} ${selectedIds.has(tx.id) ? styles.selectedRow : ''}`}
+            >
+              <div className={styles.mobileTxHeader}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds.has(tx.id)}
+                    onChange={() => toggleSelectOne(tx.id)}
+                    className={styles.checkbox}
+                  />
+                  {tx.type === 'TRANSFER' ? (
+                    <span className={styles.transferBadge}>
+                      <ArrowRightLeft size={11} /> {t('type_transfer')}
+                    </span>
+                  ) : (
+                    <span className={styles.badge}>
+                      {tx.category?.name || '---'}
+                    </span>
+                  )}
+                </div>
+                <span className={styles.mobileTxDate}>
+                  {new Date(tx.date).toLocaleDateString('pt-BR')}
+                </span>
+              </div>
+
+              <div className={styles.mobileTxBody}>
+                <div className={styles.mobileTxMain}>
+                  <span className={styles.mobileTxDesc}>{tx.description}</span>
+                  <div className={styles.mobileTxAccount}>
+                    {tx.type === 'TRANSFER' ? (
+                      <span className={styles.transferAccountFlow}>
+                        {tx.account?.name || '---'} <span className={styles.transferArrow}>➔</span> {tx.destinationAccount?.name || '---'}
+                      </span>
+                    ) : (
+                      <span>{tx.account?.name || '---'}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div 
+                  className={
+                    tx.type === 'TRANSFER' 
+                      ? styles.transferAmount 
+                      : (tx.type === 'INCOME' ? styles.incomeAmount : styles.expenseAmount)
+                  }
+                  style={{ fontSize: '1.05rem', fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  {tx.type === 'TRANSFER' ? '' : (tx.type === 'INCOME' ? '+' : '-')}R${tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+              </div>
+
+              <div className={styles.mobileTxFooter}>
+                <span className={`${styles.statusBadge} ${tx.status === 'COMPLETED' ? styles.statusCompleted : styles.statusPending}`}>
+                  {tx.status === 'COMPLETED' ? t('status_completed') : t('status_pending')}
+                </span>
+                <button 
+                  className={styles.mobileEditBtn}
+                  onClick={() => handleEditClick(tx)}
+                  title="Editar transação"
+                >
+                  <Edit3 size={14} />
+                  <span>Editar</span>
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Pagination Controls */}

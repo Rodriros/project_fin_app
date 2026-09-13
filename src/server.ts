@@ -46,6 +46,10 @@ app.use('/api', uploadRoutes);
 app.use('/api', reportRoutes);
 app.use('/api', budgetRoutes);
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.get('/ping', (req, res) => {
   res.json({ message: 'pong' });
 });

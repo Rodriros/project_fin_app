@@ -98,7 +98,55 @@
 .topbarActions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+}
+
+.mobileLogo {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mobileBrandName {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.userAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.userName {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.navIconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navText {
+  white-space: nowrap;
 }
 
 .iconBtn {
@@ -106,8 +154,8 @@
   border: 1px solid var(--border-color);
   color: var(--text-main);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,28 +171,34 @@
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-  /* Extra padding at bottom for mobile nav */
 }
 
-/* Mobile Responsiveness for Layout */
+/* Mobile Responsiveness for Layout (< 768px) */
 @media (max-width: 768px) {
   .layout {
     flex-direction: column;
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for iOS/Android address bar */
   }
 
-  /* Hide sidebar on mobile, turn into bottom nav */
+  /* Fixed Bottom Navigation Bar */
   .sidebar {
     position: fixed;
     bottom: 0;
     left: 0;
+    right: 0;
     width: 100%;
-    height: 70px;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
     flex-direction: row;
     padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 4px);
     justify-content: space-around;
     align-items: center;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    background-color: var(--sidebar-bg); /* Use solid color to overlay */
+    border-top: 1px solid var(--border-color);
+    background-color: var(--sidebar-bg);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+    z-index: 100;
   }
 
   .logo {
@@ -157,36 +211,70 @@
     justify-content: space-around;
     align-items: center;
     gap: 0;
+    height: 100%;
   }
 
   .navItem {
     flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.5rem;
+    gap: 0.2rem;
+    padding: 0.35rem 0.2rem;
     font-size: 0.65rem;
-    border-radius: 0;
+    border-radius: 8px;
     border-left: none;
     flex: 1;
     justify-content: center;
+    align-items: center;
+    color: var(--sidebar-text);
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .navItem:active {
+    transform: scale(0.92);
   }
 
   .navItem.active {
     border-left: none;
-    border-top: 3px solid var(--accent-lime);
-    background-color: rgba(255,255,255,0.05);
+    border-top: none;
+    background-color: transparent;
+    color: var(--accent-lime);
   }
 
+  .navItem.active .navIconContainer {
+    background-color: rgba(183, 228, 82, 0.16);
+    border-radius: 12px;
+    padding: 3px 12px;
+    filter: drop-shadow(0 0 6px rgba(183, 228, 82, 0.35));
+  }
+
+  .navText {
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  /* Topbar on Mobile */
   .topbar {
     padding: 0 1rem;
-    height: 60px;
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    border-bottom: 1px solid var(--border-color);
   }
 
   .pageTitle {
-    font-size: 1.25rem;
+    display: none; /* Replaced by mobile logo in header */
+  }
+
+  .mobileLogo {
+    display: flex;
+  }
+
+  .userName {
+    display: none; /* Hide name text on small screens, keep avatar and logout */
   }
 
   .contentArea {
-    padding: 1rem;
-    padding-bottom: 80px; /* Space for bottom nav */
+    padding: 1rem 0.85rem;
+    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px)); /* Safe clearance above bottom nav */
   }
 }

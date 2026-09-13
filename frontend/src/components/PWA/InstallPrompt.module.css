@@ -1,0 +1,207 @@
+.installBanner {
+  position: fixed;
+  bottom: 80px; /* Sits right above the mobile bottom navigation bar */
+  left: 12px;
+  right: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+  background-color: var(--sidebar-bg);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 99;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bannerContent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.appIconWrapper {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(183, 228, 82, 0.15);
+  border: 1px solid rgba(183, 228, 82, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cloverIcon {
+  color: var(--accent-lime);
+}
+
+.textContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.bannerTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
+.bannerSubtitle {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  line-height: 1.25;
+}
+
+.bannerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.installBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: var(--accent-lime);
+  color: #0d2218;
+  border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.installBtn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  padding: 0.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.closeBtn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* iOS Safari Guide Overlay */
+.iosGuideOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.iosGuideCard {
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  border-radius: 20px 20px 0 0;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 12px));
+}
+
+.iosGuideHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.iosGuideHeader h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.iosSteps {
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.inlineIcon {
+  vertical-align: middle;
+  margin: 0 0.25rem;
+  color: var(--accent-lime);
+}
+
+.iosGotItBtn {
+  background-color: var(--sidebar-bg);
+  color: #ffffff;
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.iosGotItBtn:hover {
+  filter: brightness(1.15);
+}
+
+/* Hide install banner on desktop */
+@media (min-width: 769px) {
+  .installBanner {
+    bottom: 20px;
+    right: 20px;
+    left: auto;
+  }
+}

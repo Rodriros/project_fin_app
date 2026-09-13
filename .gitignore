@@ -10,4 +10,4 @@ skeleton-app.md
 uploads/
 prisma/dev.db
 *.db
-
+dist/

@@ -82,3 +82,32 @@
   padding: 1.5rem;
   min-height: 300px;
 }
+
+@media (max-width: 768px) {
+  .dashboard {
+    gap: 1.25rem;
+  }
+
+  .topCards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  .cardValue {
+    font-size: 1.85rem;
+  }
+
+  .chartsArea {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .chartCard {
+    padding: 1.25rem;
+    min-height: 260px;
+  }
+}

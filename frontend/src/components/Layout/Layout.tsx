@@ -4,6 +4,7 @@ import { LayoutDashboard, Receipt, PieChart, Settings, Sun, Moon, Wallet, LogOut
 import { useThemeStore } from '../../store/themeStore';
 import { useI18nStore } from '../../i18n';
 import { useAuthStore } from '../../store/authStore';
+import { InstallPrompt } from '../PWA/InstallPrompt';
 import styles from './Layout.module.css';
 
 const Layout: React.FC = () => {
@@ -34,7 +35,7 @@ const Layout: React.FC = () => {
 
   return (
     <div className={styles.layout}>
-      {/* Sidebar */}
+      {/* Sidebar (Desktop) / Bottom Nav (Mobile) */}
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
           <div className={styles.logoIcon}>
@@ -50,8 +51,8 @@ const Layout: React.FC = () => {
               to={link.path}
               className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
             >
-              {link.icon}
-              <span>{link.name}</span>
+              <div className={styles.navIconContainer}>{link.icon}</div>
+              <span className={styles.navText}>{link.name}</span>
             </NavLink>
           ))}
         </nav>
@@ -61,30 +62,33 @@ const Layout: React.FC = () => {
       <main className={styles.mainContent}>
         {/* Topbar */}
         <header className={styles.topbar}>
+          {/* Mobile Logo Brand */}
+          <div className={styles.mobileLogo}>
+            <div className={styles.logoIcon}>
+              <Clover size={22} strokeWidth={2.4} />
+            </div>
+            <span className={styles.mobileBrandName}>FinRod APP</span>
+          </div>
+
           <div className={styles.pageTitle}>{getPageTitle()}</div>
           
           <div className={styles.topbarActions}>
             <button className={styles.iconBtn} onClick={toggleTheme} title="Toggle Theme">
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             {/* User Profile */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '10px' }}>
-              <div style={{ 
-                width: 36, height: 36, borderRadius: '50%', 
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'white', fontWeight: 600, fontSize: '0.85rem'
-              }}>
+            <div className={styles.userProfile}>
+              <div className={styles.userAvatar}>
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <span style={{ fontWeight: 500 }}>{user?.name || 'Usuário'}</span>
+              <span className={styles.userName}>{user?.name || 'Usuário'}</span>
               <button 
                 className={styles.iconBtn} 
                 onClick={handleLogout} 
                 title="Sair"
                 id="btn-logout"
               >
-                <LogOut size={18} />
+                <LogOut size={16} />
               </button>
             </div>
           </div>
@@ -95,6 +99,9 @@ const Layout: React.FC = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* PWA Mobile Installation Prompt */}
+      <InstallPrompt />
     </div>
   );
 };
