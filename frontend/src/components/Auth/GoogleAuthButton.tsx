@@ -25,8 +25,9 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
   const [localClientId, setLocalClientId] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Get client ID from .env or localStorage override
-  const envClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  // Get client ID from .env or default fallback or localStorage override
+  const DEFAULT_GOOGLE_CLIENT_ID = '325708703373-mmmar2ias1rohfcqmjc2oau8l48bm9a7.apps.googleusercontent.com';
+  const envClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
   const effectiveClientId = localStorage.getItem('finrod_google_client_id') || localStorage.getItem('finapp_google_client_id') || envClientId;
   const isConfigured = Boolean(effectiveClientId && effectiveClientId.trim().length > 10);
 

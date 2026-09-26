@@ -1,6 +1,8 @@
 import { useAuthStore } from '../store/authStore';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://finrod-backend.onrender.com/api' : 'http://localhost:3333/api');
 
 export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
