@@ -4,11 +4,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "npx prisma generate",
     "build": "npx prisma generate && tsc",
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
     "dev:frontend": "npm --prefix frontend run dev",
     "seed": "ts-node src/seed.ts"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +21,11 @@
   "dependencies": {
     "@prisma/client": "^5.11.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^26.0.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "csv-parser": "^3.2.1",
@@ -28,16 +36,12 @@
     "node-ofx-parser": "^0.5.1",
     "pdf-parse": "^2.4.5",
     "prisma": "^5.11.0",
+    "typescript": "^5.4.0",
     "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/multer": "^2.1.0",
-    "@types/node": "^26.0.1",
     "nodemon": "^3.1.14",
-    "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "ts-node": "^10.9.2"
   }
 }
