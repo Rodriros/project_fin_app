@@ -5,11 +5,22 @@ import csv from 'csv-parser';
 import * as xlsx from 'xlsx';
 // @ts-ignore
 import ofx from 'node-ofx-parser';
-let pdfParse: any = null;
+import os from 'os';
+import path from 'path';
 import { prisma } from './prismaClient';
 
+let pdfParse: any = null;
+
 const router = Router();
-const upload = multer({ dest: 'uploads/' });
+const uploadDir = path.join(os.tmpdir(), 'finrod-uploads');
+if (!fs.existsSync(uploadDir)) {
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (e) {
+    // Fallback if directory exists or permission issue
+  }
+}
+const upload = multer({ dest: uploadDir });
 
 interface RawParsedTx {
   amount: number;
